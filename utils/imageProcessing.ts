@@ -1,10 +1,12 @@
 
+
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
 import { GridConfig, StickerSlice } from '../types';
 
 /**
- * Removes white/light background from an image source.
+ * Removes background color from an image source using auto-detection.
+ * Samples the top-left pixel as the key color.
  * Returns the processed image as a Data URL.
  */
 export const removeBackground = (
@@ -28,16 +30,31 @@ export const removeBackground = (
       
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
-      const t = tolerance * 2.55; // Map 0-100 to 0-255 roughly
+
+      // Auto-detect background color from top-left pixel
+      const bgR = data[0];
+      const bgG = data[1];
+      const bgB = data[2];
+
+      // Tolerance conversion: Map 0-50 input to a distance threshold.
+      // Euclidean distance max is ~441. 
+      // We want a working range roughly 0-150 for the slider.
+      const threshold = tolerance * 3.5;
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
 
-        // Simple threshold: if all channels are bright, make transparent
-        if (r > 255 - t && g > 255 - t && b > 255 - t) {
-          data[i + 3] = 0; // Alpha to 0
+        // Euclidean distance
+        const dist = Math.sqrt(
+          (r - bgR) ** 2 +
+          (g - bgG) ** 2 +
+          (b - bgB) ** 2
+        );
+
+        if (dist < threshold) {
+          data[i + 3] = 0; // Alpha 0
         }
       }
 

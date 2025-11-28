@@ -2,9 +2,9 @@
 
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
-export const DEFAULT_PROMPT_ZH = `为我生成图中角色的绘制 Q 版的，LINE 风格的半身像表情包，注意头饰要正确，彩色手绘风格，使用 4x6 布局，涵盖各种各样的常用聊天语句，或是一些有关的娱乐 meme，其他需求：不要原图复制。所有标注为手写简体中文，标注位置为表情右上。生成的图片需为 4K 分辨率 16:9`;
+export const DEFAULT_PROMPT_ZH = `为我生成图中角色的绘制 Q 版的，LINE 风格的半身像表情包，注意头饰要正确，彩色手绘风格，使用 4x6 布局，涵盖各种各样的常用聊天语句，或是一些有关的娱乐 meme，其他需求：不要原图复制。所有标注为手写体简体中文，文字必须带有粗白色描边（以适应深色背景），标注位置为表情右上。背景必须是纯亮绿色(#00FF00)以便抠图。生成的图片需为 4K 分辨率 16:9`;
 
-export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style half-body sticker pack for the character in the image. Ensure head accessories are correct. Colorful hand-drawn style. Use a 4x6 layout. Cover various common chat phrases or related entertainment memes. Do not copy the original image directly. All text should be handwritten English in the top-right corner of each sticker. Generated image must be 4K resolution, 16:9 aspect ratio.`;
+export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style half-body sticker pack for the character in the image. Ensure head accessories are correct. Colorful hand-drawn style. Use a 4x6 layout. Cover various common chat phrases or related entertainment memes. Do not copy the original image directly. All text should be handwritten English in the top-right corner of each sticker, with a thick white outline. Background must be solid bright green (#00FF00) for easy removal. Generated image must be 4K resolution, 16:9 aspect ratio.`;
 
 export const BANNER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的横幅插画。`;
 export const BANNER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
@@ -33,8 +33,8 @@ export const TRANSLATIONS = {
     generateBtn: "Generate Meme Pack",
     generatingBtn: "Generating Stickers...",
     bgRemoval: "Background Removal",
-    tolerance: "White Tolerance",
-    bgDesc: "Adjust to remove the white background.",
+    tolerance: "Color Tolerance",
+    bgDesc: "Adjust to remove the background color.",
     grid: "Grid Layout",
     rows: "Rows",
     cols: "Columns",
@@ -69,8 +69,8 @@ export const TRANSLATIONS = {
     generateBtn: "生成表情包",
     generatingBtn: "正在生成...",
     bgRemoval: "背景移除",
-    tolerance: "白色容差",
-    bgDesc: "调节滑块以去除白色背景。",
+    tolerance: "颜色容差",
+    bgDesc: "调节滑块以去除背景颜色。",
     grid: "网格布局",
     rows: "行数",
     cols: "列数",
