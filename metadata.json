@@ -1,0 +1,5 @@
+{
+  "name": "MemeGen Pro - AI Sticker Maker",
+  "description": "Generate custom LINE-style sticker packs from your photos using Gemini 3 Pro (Nano Banana Pro). Remove backgrounds, slice, and export to ZIP.",
+  "requestFramePermissions": []
+}
