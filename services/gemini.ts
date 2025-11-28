@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI } from "@google/genai";
 import { MODEL_NAME } from "../constants";
 
@@ -15,7 +13,13 @@ const getAIClient = async () => {
   } catch (e) {
     console.warn("AI Studio key selection not available or failed", e);
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("CRITICAL ERROR: process.env.API_KEY is missing. Please check your Vercel Project Settings > Environment Variables. Also ensure vite.config.ts is correctly configured to expose this variable.");
+  }
+
+  return new GoogleGenAI({ apiKey: apiKey || '' });
 }
 
 // Helper for retry logic on "entity not found"
