@@ -28,10 +28,3 @@ export interface StickerSlice {
   blob: Blob;
   previewUrl: string;
 }
-
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-  }
-}
