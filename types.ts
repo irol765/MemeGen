@@ -1,10 +1,16 @@
 
+
 export enum AppStep {
   UPLOAD = 'UPLOAD',
   PROMPT = 'PROMPT',
   GENERATING = 'GENERATING',
   EDITING = 'EDITING',
   EXPORT = 'EXPORT'
+}
+
+export enum AppMode {
+  STICKERS = 'STICKERS',
+  GIF = 'GIF'
 }
 
 export type Language = 'en' | 'zh';

@@ -1,19 +1,43 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
 import EditorSection from './components/EditorSection';
-import { AppStep, Language } from './types';
-import { DEFAULT_PROMPT_ZH, DEFAULT_PROMPT_EN, TRANSLATIONS, BANNER_PROMPT_PREFIX_ZH, BANNER_PROMPT_SUFFIX_ZH, BANNER_PROMPT_PREFIX_EN, BANNER_PROMPT_SUFFIX_EN } from './constants';
-import { generateStickerSheet, generateBanner } from './services/gemini';
-import { cropBannerToSize } from './utils/imageProcessing';
+import { AppStep, Language, AppMode } from './types';
+import { 
+    DEFAULT_PROMPT_ZH, 
+    DEFAULT_PROMPT_EN, 
+    GIF_PROMPT_TEMPLATE_ZH,
+    GIF_PROMPT_TEMPLATE_EN,
+    TRANSLATIONS, 
+    BANNER_PROMPT_PREFIX_ZH, 
+    BANNER_PROMPT_SUFFIX_ZH, 
+    BANNER_PROMPT_PREFIX_EN, 
+    BANNER_PROMPT_SUFFIX_EN,
+    GUIDE_PROMPT_PREFIX_ZH,
+    GUIDE_PROMPT_SUFFIX_ZH,
+    GUIDE_PROMPT_PREFIX_EN,
+    GUIDE_PROMPT_SUFFIX_EN,
+    THANKYOU_PROMPT_PREFIX_ZH,
+    THANKYOU_PROMPT_SUFFIX_ZH,
+    THANKYOU_PROMPT_PREFIX_EN,
+    THANKYOU_PROMPT_SUFFIX_EN
+} from './constants';
+import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou } from './services/gemini';
+import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
 import { Camera, Globe } from 'lucide-react';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.UPLOAD);
+  const [mode, setMode] = useState<AppMode>(AppMode.STICKERS);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState<Language>('zh'); // Default to Chinese
+  
+  // Prompt State
   const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT_ZH);
+  const [actionText, setActionText] = useState<string>('');
+  
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,15 +46,48 @@ const App: React.FC = () => {
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
 
+  // Donation Guide State
+  const [guideImage, setGuideImage] = useState<string | null>(null);
+  const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
+  const [guideError, setGuideError] = useState<string | null>(null);
+
+  // Thank You Image State
+  const [thankYouImage, setThankYouImage] = useState<string | null>(null);
+  const [isGeneratingThankYou, setIsGeneratingThankYou] = useState(false);
+  const [thankYouError, setThankYouError] = useState<string | null>(null);
+
   const t = TRANSLATIONS[language];
+
+  // Update prompt when language or mode changes
+  useEffect(() => {
+    if (mode === AppMode.STICKERS) {
+        // Only reset prompt if it's currently a default
+        if (prompt === DEFAULT_PROMPT_ZH || prompt === DEFAULT_PROMPT_EN || prompt.includes("{action}")) {
+            setPrompt(language === 'zh' ? DEFAULT_PROMPT_ZH : DEFAULT_PROMPT_EN);
+        }
+    } else {
+        // GIF Mode: Use Template
+        const template = language === 'zh' ? GIF_PROMPT_TEMPLATE_ZH : GIF_PROMPT_TEMPLATE_EN;
+        const filledPrompt = template.split("{action}").join(actionText || (language === 'zh' ? '...' : '...'));
+        setPrompt(filledPrompt);
+    }
+  }, [language, mode]);
+
+  // Update prompt dynamically when action text changes in GIF mode
+  useEffect(() => {
+      if (mode === AppMode.GIF) {
+          const template = language === 'zh' ? GIF_PROMPT_TEMPLATE_ZH : GIF_PROMPT_TEMPLATE_EN;
+          // If action is empty, just show placeholders to avoid confusion in preview, but validation blocks generation
+          const displayAction = actionText || (language === 'zh' ? '指定动作' : 'ACTION');
+          const filledPrompt = template.split("{action}").join(displayAction);
+          setPrompt(filledPrompt);
+      }
+  }, [actionText, language, mode]);
+
 
   const toggleLanguage = () => {
     const newLang = language === 'zh' ? 'en' : 'zh';
     setLanguage(newLang);
-    // Only update prompt if user hasn't started editing heavily or if it's still the default of the other lang
-    if (prompt === DEFAULT_PROMPT_ZH || prompt === DEFAULT_PROMPT_EN) {
-      setPrompt(newLang === 'zh' ? DEFAULT_PROMPT_ZH : DEFAULT_PROMPT_EN);
-    }
   };
 
   const handleFileSelected = (file: File) => {
@@ -45,6 +102,8 @@ const App: React.FC = () => {
     setStep(AppStep.GENERATING);
     setError(null);
     setBannerImage(null); // Reset banner on new sticker gen
+    setGuideImage(null);
+    setThankYouImage(null);
 
     try {
       const resultBase64 = await generateStickerSheet(uploadedFile, prompt);
@@ -55,6 +114,23 @@ const App: React.FC = () => {
       setError(t.error);
       setStep(AppStep.PROMPT);
     }
+  };
+
+  const handleSkip = () => {
+    if (!uploadedFile) return;
+    setBannerImage(null);
+    setGuideImage(null);
+    setThankYouImage(null);
+    setError(null);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        if (e.target?.result) {
+            setGeneratedImage(e.target.result as string);
+            setStep(AppStep.EDITING);
+        }
+    };
+    reader.readAsDataURL(uploadedFile);
   };
 
   const handleGenerateBanner = async () => {
@@ -80,11 +156,61 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateGuide = async () => {
+    if (!uploadedFile) return;
+    
+    setIsGeneratingGuide(true);
+    setGuideError(null);
+
+    try {
+        const prefix = language === 'zh' ? GUIDE_PROMPT_PREFIX_ZH : GUIDE_PROMPT_PREFIX_EN;
+        const suffix = language === 'zh' ? GUIDE_PROMPT_SUFFIX_ZH : GUIDE_PROMPT_SUFFIX_EN;
+        const guidePrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
+        
+        const rawGuide = await generateDonationGuide(uploadedFile, guidePrompt);
+        const croppedGuide = await cropGuideToSize(rawGuide);
+        
+        setGuideImage(croppedGuide);
+    } catch (err: any) {
+        console.error("Guide generation failed", err);
+        setGuideError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+    } finally {
+        setIsGeneratingGuide(false);
+    }
+  };
+
+  const handleGenerateThankYou = async () => {
+    if (!uploadedFile) return;
+    
+    setIsGeneratingThankYou(true);
+    setThankYouError(null);
+
+    try {
+        const prefix = language === 'zh' ? THANKYOU_PROMPT_PREFIX_ZH : THANKYOU_PROMPT_PREFIX_EN;
+        const suffix = language === 'zh' ? THANKYOU_PROMPT_SUFFIX_ZH : THANKYOU_PROMPT_SUFFIX_EN;
+        const thankYouPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
+        
+        const rawThankYou = await generateDonationThankYou(uploadedFile, thankYouPrompt);
+        const croppedThankYou = await cropThankYouToSize(rawThankYou);
+        
+        setThankYouImage(croppedThankYou);
+    } catch (err: any) {
+        console.error("Thank You generation failed", err);
+        setThankYouError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+    } finally {
+        setIsGeneratingThankYou(false);
+    }
+  };
+
   const handleReset = () => {
     setStep(AppStep.UPLOAD);
     setUploadedFile(null);
     setGeneratedImage(null);
     setBannerImage(null);
+    setGuideImage(null);
+    setThankYouImage(null);
+    setMode(AppMode.STICKERS);
+    setActionText('');
     setPrompt(language === 'zh' ? DEFAULT_PROMPT_ZH : DEFAULT_PROMPT_EN);
     setError(null);
   };
@@ -164,7 +290,7 @@ const App: React.FC = () => {
                     {language === 'zh' ? '将你的照片变成表情包' : 'Turn your photos into stickers.'}
                  </h2>
                  <p className="text-lg text-slate-500">
-                    {language === 'zh' ? '上传人物照片，自动生成 4x6 表情图。' : 'Upload a character photo, we\'ll generate a 4x6 sticker sheet.'}
+                    {language === 'zh' ? '上传人物照片，自动生成静态切片或 GIF 动画。' : 'Upload a character photo, generate sticker sheets or animated GIFs.'}
                  </p>
                </div>
                <UploadSection onFileSelected={handleFileSelected} lang={language} />
@@ -177,9 +303,14 @@ const App: React.FC = () => {
                  prompt={prompt} 
                  setPrompt={setPrompt} 
                  onGenerate={handleGenerate}
+                 onSkip={handleSkip}
                  isGenerating={step === AppStep.GENERATING}
                  previewImage={uploadedFile}
                  lang={language}
+                 mode={mode}
+                 setMode={setMode}
+                 actionText={actionText}
+                 setActionText={setActionText}
                />
             </div>
           )}
@@ -190,10 +321,23 @@ const App: React.FC = () => {
                  initialImageSrc={generatedImage} 
                  onReset={handleReset}
                  lang={language}
+                 
                  onGenerateBanner={handleGenerateBanner}
                  bannerImage={bannerImage}
                  isGeneratingBanner={isGeneratingBanner}
                  bannerError={bannerError}
+
+                 onGenerateGuide={handleGenerateGuide}
+                 guideImage={guideImage}
+                 isGeneratingGuide={isGeneratingGuide}
+                 guideError={guideError}
+
+                 onGenerateThankYou={handleGenerateThankYou}
+                 thankYouImage={thankYouImage}
+                 isGeneratingThankYou={isGeneratingThankYou}
+                 thankYouError={thankYouError}
+
+                 mode={mode}
                />
             </div>
           )}

@@ -1,7 +1,8 @@
 
-
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
+// @ts-ignore
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import { GridConfig, StickerSlice } from '../types';
 
 /**
@@ -37,9 +38,7 @@ export const removeBackground = (
       const bgB = data[2];
 
       // Tolerance conversion: Map 0-50 input to a distance threshold.
-      // Euclidean distance max is ~441. 
-      // We want a working range roughly 0-150 for the slider.
-      const threshold = tolerance * 3.5;
+      const threshold = tolerance * 5.0;
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
@@ -54,6 +53,9 @@ export const removeBackground = (
         );
 
         if (dist < threshold) {
+          data[i] = 0;     // Clear Red
+          data[i + 1] = 0; // Clear Green
+          data[i + 2] = 0; // Clear Blue
           data[i + 3] = 0; // Alpha 0
         }
       }
@@ -81,28 +83,23 @@ export const sliceImageToBlobs = async (
       const cellWidth = img.width / cols;
       const cellHeight = img.height / rows;
       
-      const slices: StickerSlice[] = [];
-      const promises: Promise<void>[] = [];
+      const promises: Promise<StickerSlice | null>[] = [];
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const promise = new Promise<void>((resSlice) => {
+          const promise = new Promise<StickerSlice | null>((resSlice) => {
             const canvas = document.createElement('canvas');
             
-            // Padding calculations (applied to each side)
             const padX = (cellWidth * padding) / 100;
             const padY = (cellHeight * padding) / 100;
-            
-            // Offset calculations (shifts the capture box)
             const shiftX = (cellWidth * offsetX) / 100;
             const shiftY = (cellHeight * offsetY) / 100;
 
-            const contentWidth = cellWidth - (padX * 2);
-            const contentHeight = cellHeight - (padY * 2);
+            const contentWidth = Math.floor(cellWidth - (padX * 2));
+            const contentHeight = Math.floor(cellHeight - (padY * 2));
 
-            // Ensure we don't have negative dimensions
             if (contentWidth <= 0 || contentHeight <= 0) {
-                resSlice();
+                resSlice(null);
                 return;
             }
 
@@ -111,8 +108,6 @@ export const sliceImageToBlobs = async (
             const ctx = canvas.getContext('2d');
             
             if (ctx) {
-                // Source x, y (top-left of the crop box)
-                // Base cell pos + Padding + Offset
                 const srcX = (c * cellWidth) + padX + shiftX;
                 const srcY = (r * cellHeight) + padY + shiftY;
 
@@ -130,23 +125,26 @@ export const sliceImageToBlobs = async (
 
                 canvas.toBlob((blob) => {
                     if (blob) {
-                        slices.push({
+                        resSlice({
                             id: `sticker_${r}_${c}`,
                             blob: blob,
                             previewUrl: URL.createObjectURL(blob)
                         });
+                    } else {
+                        resSlice(null);
                     }
-                    resSlice();
                 }, 'image/png');
             } else {
-                resSlice();
+                resSlice(null);
             }
           });
           promises.push(promise);
         }
       }
 
-      await Promise.all(promises);
+      const results = await Promise.all(promises);
+      const slices = results.filter((s): s is StickerSlice => s !== null);
+      
       resolve(slices);
     };
     img.onerror = reject;
@@ -169,19 +167,16 @@ export const createAndDownloadZip = async (slices: StickerSlice[]) => {
 };
 
 /**
- * Crops/Resizes an image to exactly 750x400 pixels
+ * Helper to crop/resize image to target dimensions
  */
-export const cropBannerToSize = (imageSrc: string): Promise<string> => {
+const cropImageToSize = (imageSrc: string, targetWidth: number, targetHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const TARGET_WIDTH = 750;
-            const TARGET_HEIGHT = 400;
-            
-            canvas.width = TARGET_WIDTH;
-            canvas.height = TARGET_HEIGHT;
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
             const ctx = canvas.getContext('2d');
             
             if (!ctx) {
@@ -189,12 +184,11 @@ export const cropBannerToSize = (imageSrc: string): Promise<string> => {
                 return;
             }
 
-            // Calculate scaling to cover the area (object-fit: cover)
-            const scale = Math.max(TARGET_WIDTH / img.width, TARGET_HEIGHT / img.height);
+            const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
             const w = img.width * scale;
             const h = img.height * scale;
-            const x = (TARGET_WIDTH - w) / 2;
-            const y = (TARGET_HEIGHT - h) / 2;
+            const x = (targetWidth - w) / 2;
+            const y = (targetHeight - h) / 2;
 
             ctx.drawImage(img, x, y, w, h);
             resolve(canvas.toDataURL('image/png'));
@@ -202,4 +196,177 @@ export const cropBannerToSize = (imageSrc: string): Promise<string> => {
         img.onerror = reject;
         img.src = imageSrc;
     });
+};
+
+export const cropBannerToSize = (imageSrc: string): Promise<string> => {
+    return cropImageToSize(imageSrc, 750, 400);
+};
+
+export const cropGuideToSize = (imageSrc: string): Promise<string> => {
+    return cropImageToSize(imageSrc, 750, 560);
+};
+
+export const cropThankYouToSize = (imageSrc: string): Promise<string> => {
+    return cropImageToSize(imageSrc, 750, 750);
+};
+
+/**
+ * Generates an animated GIF from sticker slices using gifenc.
+ * Uses a robust RGBA-only strategy to ensure buffer alignment for Uint32Array compatibility.
+ */
+export const generateGif = async (
+  slices: StickerSlice[], 
+  fps: number
+): Promise<string> => {
+  if (slices.length === 0) return '';
+  
+  const delay = Math.round(1000 / fps);
+  
+  // 1. Load all images
+  const images = await Promise.all(slices.map(s => loadImage(s.previewUrl)));
+  if (images.length === 0) return '';
+
+  const width = images[0].width;
+  const height = images[0].height;
+
+  // 2. Pre-process frames (Center content & Get RGBA Data)
+  const framesRGBA: Uint8Array[] = [];
+
+  const getContentBounds = (data: Uint8ClampedArray, w: number, h: number) => {
+    let minX = w, minY = h, maxX = 0, maxY = 0;
+    let found = false;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const alpha = data[(y * w + x) * 4 + 3];
+            if (alpha > 20) { 
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+                found = true;
+            }
+        }
+    }
+    return found ? { minX, minY, maxX, maxY, w: maxX - minX + 1, h: maxY - minY + 1 } : null;
+  };
+
+  for (const img of images) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
+    if (!ctx) continue;
+    
+    // Draw original
+    ctx.drawImage(img, 0, 0);
+    const rawData = ctx.getImageData(0, 0, width, height);
+    const bounds = getContentBounds(rawData.data, width, height);
+
+    // Clear and Redraw Centered
+    ctx.clearRect(0, 0, width, height);
+    if (bounds) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const boundCenterX = bounds.minX + bounds.w / 2;
+        const boundCenterY = bounds.minY + bounds.h / 2;
+        ctx.drawImage(img, Math.round(centerX - boundCenterX), Math.round(centerY - boundCenterY));
+    } else {
+        ctx.drawImage(img, 0, 0);
+    }
+    
+    const imageData = ctx.getImageData(0, 0, width, height);
+    // Copy to Uint8Array to ensure standard array behavior and memory alignment
+    framesRGBA.push(new Uint8Array(imageData.data));
+  }
+
+  // 3. Generate Global Palette from OPAQUE pixels only
+  const opaqueSamples: number[] = [];
+  const MAX_SAMPLES = 50000; 
+  let globalPixelIndex = 0;
+
+  for (const data of framesRGBA) {
+      // Step by 4 (pixel by pixel)
+      for (let i = 0; i < data.length; i += 4) {
+          globalPixelIndex++;
+          // Stride: Sample roughly every 100th pixel to get good distribution without OOM
+          if (globalPixelIndex % 100 === 0) { 
+             if (data[i + 3] >= 128) {
+                // Only if opaque. Push RGBA (4 bytes)
+                opaqueSamples.push(data[i], data[i+1], data[i+2], 255);
+             }
+          }
+          if (opaqueSamples.length >= MAX_SAMPLES * 4) break;
+      }
+      if (opaqueSamples.length >= MAX_SAMPLES * 4) break;
+  }
+
+  // Quantize (RGBA Mode)
+  // Limit to 255 colors to strictly reserve 1 slot for transparency (appended at end)
+  let palette: number[][];
+  if (opaqueSamples.length > 0) {
+      const pixelData = new Uint8Array(opaqueSamples);
+      // Ensure we leave room for 1 transparent color, so max 255 colors from image
+      palette = quantize(pixelData, 255, { format: 'rgba' });
+  } else {
+      palette = [[0,0,0,255]]; // Fallback
+  }
+
+  // 4. Construct Final GIF Palette
+  // Extract RGB from the quantized palette
+  const paletteRGB = palette.map(p => p.slice(0, 3));
+  
+  // Strategy: Append transparency at the end.
+  // This avoids index 0 which might be falsy-checked in some libs.
+  const transparentIndex = paletteRGB.length;
+  
+  // Append a dummy color (black) at the end for the transparent index.
+  const finalPalette = [...paletteRGB, [0, 0, 0]]; 
+
+  // 5. Encode Frames
+  const gif = new GIFEncoder();
+
+  for (const rgba of framesRGBA) {
+      const pixelCount = width * height;
+      
+      // Map pixels using RGBA format.
+      // This returns indices into `palette` (0 to palette.length-1)
+      const mappedIndices = applyPalette(rgba, palette, 'rgba');
+      
+      // Create final index buffer
+      const finalIndices = new Uint8Array(pixelCount);
+
+      for (let i = 0; i < pixelCount; i++) {
+          const alpha = rgba[i * 4 + 3];
+          if (alpha < 128) {
+              // Force transparent pixels to the transparent index
+              finalIndices[i] = transparentIndex; 
+          } else {
+              // Use mapped index directly
+              finalIndices[i] = mappedIndices[i];
+          }
+      }
+
+      gif.writeFrame(finalIndices, width, height, { 
+        palette: finalPalette, 
+        delay: delay,
+        transparent: transparentIndex, 
+        dispose: 2 // Restore to background (transparent)
+      });
+  }
+
+  gif.finish();
+  
+  const buffer = gif.bytes(); 
+  const blob = new Blob([buffer], { type: 'image/gif' });
+  return URL.createObjectURL(blob);
+};
+
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
 };

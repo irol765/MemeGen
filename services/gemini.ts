@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { MODEL_NAME } from "../constants";
 
@@ -95,7 +96,73 @@ export const generateBanner = async (
     },
     config: {
       imageConfig: {
-          aspectRatio: "16:9", // Closest to 750x400 (which is 15:8)
+          aspectRatio: "16:9", // Closest to 750x400
+          imageSize: "2K"
+      },
+    },
+  };
+
+  const response = await generateWithRetry(ai, generateParams);
+  return extractImageFromResponse(response);
+};
+
+export const generateDonationGuide = async (
+  imageFile: File,
+  fullPrompt: string
+): Promise<string> => {
+  let ai = await getAIClient();
+  const base64Image = await fileToBase64(imageFile);
+  const cleanBase64 = base64Image.split(',')[1];
+
+  const generateParams = {
+    model: MODEL_NAME,
+    contents: {
+      parts: [
+        { text: fullPrompt },
+        {
+          inlineData: {
+            mimeType: imageFile.type,
+            data: cleanBase64,
+          },
+        },
+      ],
+    },
+    config: {
+      imageConfig: {
+          aspectRatio: "4:3", // Closest to 750x560
+          imageSize: "2K"
+      },
+    },
+  };
+
+  const response = await generateWithRetry(ai, generateParams);
+  return extractImageFromResponse(response);
+};
+
+export const generateDonationThankYou = async (
+  imageFile: File,
+  fullPrompt: string
+): Promise<string> => {
+  let ai = await getAIClient();
+  const base64Image = await fileToBase64(imageFile);
+  const cleanBase64 = base64Image.split(',')[1];
+
+  const generateParams = {
+    model: MODEL_NAME,
+    contents: {
+      parts: [
+        { text: fullPrompt },
+        {
+          inlineData: {
+            mimeType: imageFile.type,
+            data: cleanBase64,
+          },
+        },
+      ],
+    },
+    config: {
+      imageConfig: {
+          aspectRatio: "1:1", // 750x750 is 1:1
           imageSize: "2K"
       },
     },

@@ -1,54 +1,54 @@
-# MemeGen Pro - AI 表情包制作器
 
-这就一个现代化的 React 应用程序，利用 Google 的 Gemini 3 Pro (Nano Banana Pro) 模型将您的照片变成 LINE 风格的表情包。
+# MemeGen Pro - AI Sticker Maker
 
-## 功能特性
+A modern React application that turns photos into LINE-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
 
-1.  **AI 生成**: 使用 `gemini-3-pro-image-preview` 模型，根据参考照片生成高质量、4K 分辨率的表情包切片（默认 4x6 布局）。
-2.  **智能编辑器**:
-    *   **背景移除**: 客户端算法自动移除白色背景，生成透明贴纸。
-    *   **切片**: 根据自定义的行/列数和内边距，自动将网格切割成单独的 PNG 文件。支持 X/Y 轴偏移调整，以便完美框选每个表情。
-3.  **导出**: 将整套表情包打包下载为 ZIP 文件。
-4.  **自定义提示词**: 调整生成风格和文本语言。
-5.  **多语言支持**: 支持中英文界面切换。
-6.  **PWA 支持**: 支持 iOS "添加到主屏幕"，像原生 App 一样使用。
+## Features
 
-## 前置条件
+1.  **AI Generation**: Uses `gemini-3-pro-image-preview` to generate high-quality, 4K resolution sticker sheets (4x6 layout) from a reference photo.
+2.  **Smart Editor**:
+    *   **Background Removal**: Client-side algorithm to remove white backgrounds and make stickers transparent.
+    *   **Slicing**: Automatically cuts the grid into individual PNG files based on customizable rows/columns and padding. Includes Offset (X/Y) controls to perfectly frame each sticker.
+3.  **Export**: Downloads the sticker set as a ZIP file.
+4.  **Customizable Prompts**: Adjust the generation style and text language.
+5.  **Multi-language Support**: Switch between English and Chinese interfaces.
+
+## Prerequisites
 
 *   Node.js 18+
-*   拥有已启用 Gemini API 的 Google Cloud 项目。
-*   **注意**: 本应用使用付费模型 `gemini-3-pro-image-preview`。
+*   A Google Cloud Project with Gemini API enabled.
+*   **Important**: This app uses the paid `gemini-3-pro-image-preview` model.
 
-## 开发指南
+## Development
 
-1.  安装依赖:
+1.  Install dependencies:
     ```bash
     npm install
     ```
 
-2.  启动开发服务器:
+2.  Start the development server:
     ```bash
     npm start
     ```
 
-## 部署到 Vercel
+## Deployment on Vercel
 
-1.  将此代码推送到 GitHub 仓库。
-2.  将仓库导入 Vercel。
-3.  **环境变量**:
-    进入 Vercel 项目设置 > Environment Variables 并添加:
-    *   `API_KEY`: 您的 Google Gemini API 密钥。
+1.  Push this code to a GitHub repository.
+2.  Import the repository into Vercel.
+3.  **Environment Variables**:
+    Go to your Vercel Project Settings > Environment Variables and add:
+    *   `API_KEY`: Your Google Gemini API Key.
     
-    *注意：如果提供了 `API_KEY`，应用将直接使用它。如果未提供，应用可能会尝试使用 AI Studio 弹出流程（仅在特定的 playground 环境中有效）。*
+    *Note: If `API_KEY` is provided, the app will use it directly. If not provided, the app may attempt to use the AI Studio popup flow (which only works in specific playground environments).*
 
-4.  部署！Vercel 会自动检测 React 框架并构建项目。
+4.  Deploy! Vercel will automatically detect the React framework and build the project.
 
-## 使用指南
+## Usage Guide
 
-1.  **上传**: 拖放一张人物或角色的照片。
-2.  **提示词**: 查看默认提示词。它针对 "Q版、LINE 风格、4x6 布局、中文文本" 进行了优化。点击 "生成表情包"。
-3.  **密钥选择**: 如果未设置环境变量（本地开发时），请在弹窗中选择您的密钥。
-4.  **编辑**:
-    *   使用 "白色容差" 滑块使背景变透明。
-    *   调整 "内边距" 和 "位移" 以紧密裁剪表情。
-5.  **下载**: 点击 "下载 ZIP" 获取您的表情包。
+1.  **Upload**: Drag and drop a photo of a person or character.
+2.  **Prompt**: Review the default prompt. It is optimized for "Q-version, LINE style, 4x6 layout, Chinese text (top-right)". Click "Generate".
+3.  **Key Selection**: If you haven't set an API_KEY env var (local dev), select your key in the popup.
+4.  **Edit**:
+    *   Use the "White Tolerance" slider to make the background transparent.
+    *   Adjust "Padding" and "Offsets" to crop the stickers tightly.
+5.  **Download**: Click "Download ZIP" to get your sticker pack.
