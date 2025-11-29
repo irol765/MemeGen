@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
     define: {
       // JSON.stringify is necessary because define performs a text replacement
       'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY),
+      'process.env.ACCESS_CODE': JSON.stringify(env.ACCESS_CODE || process.env.ACCESS_CODE),
     },
   };
 });

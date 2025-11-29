@@ -2,6 +2,8 @@
 
 
 
+
+
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
 export const DEFAULT_PROMPT_ZH = `为我生成图中角色的绘制 Q 版的，LINE 风格的半身像表情包，注意头饰要正确，彩色手绘风格，使用 4x6 布局，涵盖各种各样的常用聊天语句，或是一些有关的娱乐 meme，其他需求：不要原图复制。所有标注为手写体简体中文，文字必须带有粗白色描边（以适应深色背景），标注位置为表情右上。背景必须是纯亮绿色(#00FF00)以便抠图。生成的图片需为 4K 分辨率 16:9`;
@@ -144,7 +146,12 @@ export const TRANSLATIONS = {
     step2Desc: "Check the animation loop.",
     synthesizeGif: "Synthesize GIF",
     synthesizeDesc: "Click after adjusting the grid layout",
-    previewHint: "Click 'Synthesize GIF' to preview"
+    previewHint: "Click 'Synthesize GIF' to preview",
+    authTitle: "Security Check",
+    authDesc: "This service is protected. Please enter the access code to continue.",
+    authPlaceholder: "Enter Access Code",
+    authButton: "Unlock App",
+    authError: "Incorrect access code. Please try again."
   },
   zh: {
     title: "MemeGen Pro",
@@ -215,6 +222,11 @@ export const TRANSLATIONS = {
     step2Desc: "检查动画流畅度。",
     synthesizeGif: "合成 GIF 动画",
     synthesizeDesc: "调整好网格和背景后点击此按钮",
-    previewHint: "点击右侧“合成 GIF 动画”按钮预览"
+    previewHint: "点击右侧“合成 GIF 动画”按钮预览",
+    authTitle: "访问验证",
+    authDesc: "本服务受保护，请输入部署时设置的安全码以继续使用。",
+    authPlaceholder: "请输入安全码",
+    authButton: "解锁应用",
+    authError: "安全码错误，请重试。"
   }
 };

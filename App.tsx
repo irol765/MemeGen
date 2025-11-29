@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
@@ -26,13 +28,18 @@ import {
 } from './constants';
 import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou } from './services/gemini';
 import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
-import { Camera, Globe } from 'lucide-react';
+import { Camera, Globe, Lock, ArrowRight } from 'lucide-react';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.UPLOAD);
   const [mode, setMode] = useState<AppMode>(AppMode.STICKERS);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState<Language>('zh'); // Default to Chinese
+  
+  // Auth State
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [accessCodeInput, setAccessCodeInput] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Prompt State
   const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT_ZH);
@@ -57,6 +64,25 @@ const App: React.FC = () => {
   const [thankYouError, setThankYouError] = useState<string | null>(null);
 
   const t = TRANSLATIONS[language];
+
+  // Check auth on load
+  useEffect(() => {
+     const envCode = process.env.ACCESS_CODE;
+     // If no access code is set in environment, auto-authorize
+     if (!envCode) {
+         setIsAuthorized(true);
+     }
+  }, []);
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (accessCodeInput === process.env.ACCESS_CODE) {
+          setIsAuthorized(true);
+          setAuthError(null);
+      } else {
+          setAuthError(t.authError);
+      }
+  };
 
   // Update prompt when language or mode changes
   useEffect(() => {
@@ -247,101 +273,138 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 pt-12">
         
-        {/* Progress Stepper */}
-        <div className="flex justify-center mb-16">
-          <div className="flex items-center gap-4">
-             {[AppStep.UPLOAD, AppStep.PROMPT, AppStep.EDITING].map((s, idx) => {
-               const currentIdx = [AppStep.UPLOAD, AppStep.PROMPT, AppStep.GENERATING, AppStep.EDITING].indexOf(step);
-               // Map GENERATING to PROMPT index for visual simplicity
-               const stepMap = [AppStep.UPLOAD, AppStep.PROMPT, AppStep.EDITING];
-               const activeIdx = step === AppStep.GENERATING ? 1 : stepMap.indexOf(step);
-               
-               const isCompleted = activeIdx > idx;
-               const isCurrent = activeIdx === idx;
-               
-               return (
-                 <div key={s} className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                      isCompleted ? 'bg-indigo-600 text-white' : 
-                      isCurrent ? 'bg-white border-2 border-indigo-600 text-indigo-600 shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'
-                    }`}>
-                      {idx + 1}
+        {!isAuthorized ? (
+            <div className="min-h-[60vh] flex items-center justify-center animate-fade-in-up">
+                <div className="bg-white p-8 rounded-3xl shadow-xl border border-indigo-100 w-full max-w-md text-center">
+                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Lock size={32} />
                     </div>
-                    {idx < 2 && <div className={`w-12 h-1 rounded-full ${isCompleted ? 'bg-indigo-600' : 'bg-slate-200'}`} />}
-                 </div>
-               );
-             })}
-          </div>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
-            {error}
-          </div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">{t.authTitle}</h2>
+                    <p className="text-slate-500 mb-8">{t.authDesc}</p>
+                    
+                    <form onSubmit={handleAuthSubmit} className="space-y-4">
+                        <input
+                            type="password"
+                            value={accessCodeInput}
+                            onChange={(e) => setAccessCodeInput(e.target.value)}
+                            placeholder={t.authPlaceholder}
+                            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-center text-lg"
+                            autoFocus
+                        />
+                        {authError && (
+                            <p className="text-red-500 text-sm font-medium animate-pulse">
+                                {authError}
+                            </p>
+                        )}
+                        <button
+                            type="submit"
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
+                        >
+                            {t.authButton}
+                            <ArrowRight size={20} />
+                        </button>
+                    </form>
+                </div>
+            </div>
+        ) : (
+            <>
+                {/* Progress Stepper */}
+                <div className="flex justify-center mb-16">
+                  <div className="flex items-center gap-4">
+                     {[AppStep.UPLOAD, AppStep.PROMPT, AppStep.EDITING].map((s, idx) => {
+                       const currentIdx = [AppStep.UPLOAD, AppStep.PROMPT, AppStep.GENERATING, AppStep.EDITING].indexOf(step);
+                       // Map GENERATING to PROMPT index for visual simplicity
+                       const stepMap = [AppStep.UPLOAD, AppStep.PROMPT, AppStep.EDITING];
+                       const activeIdx = step === AppStep.GENERATING ? 1 : stepMap.indexOf(step);
+                       
+                       const isCompleted = activeIdx > idx;
+                       const isCurrent = activeIdx === idx;
+                       
+                       return (
+                         <div key={s} className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                              isCompleted ? 'bg-indigo-600 text-white' : 
+                              isCurrent ? 'bg-white border-2 border-indigo-600 text-indigo-600 shadow-lg shadow-indigo-100' : 'bg-slate-200 text-slate-400'
+                            }`}>
+                              {idx + 1}
+                            </div>
+                            {idx < 2 && <div className={`w-12 h-1 rounded-full ${isCompleted ? 'bg-indigo-600' : 'bg-slate-200'}`} />}
+                         </div>
+                       );
+                     })}
+                  </div>
+                </div>
+        
+                {/* Error Message */}
+                {error && (
+                  <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
+                    {error}
+                  </div>
+                )}
+        
+                {/* Views */}
+                <div className="transition-all duration-500 ease-in-out">
+                  {step === AppStep.UPLOAD && (
+                    <div className="animate-fade-in-up">
+                       <div className="text-center mb-10">
+                         <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                            {language === 'zh' ? '将你的照片变成表情包' : 'Turn your photos into stickers.'}
+                         </h2>
+                         <p className="text-lg text-slate-500">
+                            {language === 'zh' ? '上传人物照片，自动生成静态切片或 GIF 动画。' : 'Upload a character photo, generate sticker sheets or animated GIFs.'}
+                         </p>
+                       </div>
+                       <UploadSection onFileSelected={handleFileSelected} lang={language} />
+                    </div>
+                  )}
+        
+                  {(step === AppStep.PROMPT || step === AppStep.GENERATING) && (
+                    <div className="animate-fade-in-up">
+                       <PromptSection 
+                         prompt={prompt} 
+                         setPrompt={setPrompt} 
+                         onGenerate={handleGenerate}
+                         onSkip={handleSkip}
+                         isGenerating={step === AppStep.GENERATING}
+                         previewImage={uploadedFile}
+                         lang={language}
+                         mode={mode}
+                         setMode={setMode}
+                         actionText={actionText}
+                         setActionText={setActionText}
+                       />
+                    </div>
+                  )}
+        
+                  {step === AppStep.EDITING && generatedImage && (
+                    <div className="animate-fade-in-up">
+                       <EditorSection 
+                         initialImageSrc={generatedImage} 
+                         onReset={handleReset}
+                         lang={language}
+                         
+                         onGenerateBanner={handleGenerateBanner}
+                         bannerImage={bannerImage}
+                         isGeneratingBanner={isGeneratingBanner}
+                         bannerError={bannerError}
+        
+                         onGenerateGuide={handleGenerateGuide}
+                         guideImage={guideImage}
+                         isGeneratingGuide={isGeneratingGuide}
+                         guideError={guideError}
+        
+                         onGenerateThankYou={handleGenerateThankYou}
+                         thankYouImage={thankYouImage}
+                         isGeneratingThankYou={isGeneratingThankYou}
+                         thankYouError={thankYouError}
+        
+                         mode={mode}
+                       />
+                    </div>
+                  )}
+                </div>
+            </>
         )}
-
-        {/* Views */}
-        <div className="transition-all duration-500 ease-in-out">
-          {step === AppStep.UPLOAD && (
-            <div className="animate-fade-in-up">
-               <div className="text-center mb-10">
-                 <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                    {language === 'zh' ? '将你的照片变成表情包' : 'Turn your photos into stickers.'}
-                 </h2>
-                 <p className="text-lg text-slate-500">
-                    {language === 'zh' ? '上传人物照片，自动生成静态切片或 GIF 动画。' : 'Upload a character photo, generate sticker sheets or animated GIFs.'}
-                 </p>
-               </div>
-               <UploadSection onFileSelected={handleFileSelected} lang={language} />
-            </div>
-          )}
-
-          {(step === AppStep.PROMPT || step === AppStep.GENERATING) && (
-            <div className="animate-fade-in-up">
-               <PromptSection 
-                 prompt={prompt} 
-                 setPrompt={setPrompt} 
-                 onGenerate={handleGenerate}
-                 onSkip={handleSkip}
-                 isGenerating={step === AppStep.GENERATING}
-                 previewImage={uploadedFile}
-                 lang={language}
-                 mode={mode}
-                 setMode={setMode}
-                 actionText={actionText}
-                 setActionText={setActionText}
-               />
-            </div>
-          )}
-
-          {step === AppStep.EDITING && generatedImage && (
-            <div className="animate-fade-in-up">
-               <EditorSection 
-                 initialImageSrc={generatedImage} 
-                 onReset={handleReset}
-                 lang={language}
-                 
-                 onGenerateBanner={handleGenerateBanner}
-                 bannerImage={bannerImage}
-                 isGeneratingBanner={isGeneratingBanner}
-                 bannerError={bannerError}
-
-                 onGenerateGuide={handleGenerateGuide}
-                 guideImage={guideImage}
-                 isGeneratingGuide={isGeneratingGuide}
-                 guideError={guideError}
-
-                 onGenerateThankYou={handleGenerateThankYou}
-                 thankYouImage={thankYouImage}
-                 isGeneratingThankYou={isGeneratingThankYou}
-                 thankYouError={thankYouError}
-
-                 mode={mode}
-               />
-            </div>
-          )}
-        </div>
 
       </main>
     </div>

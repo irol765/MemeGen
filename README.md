@@ -1,4 +1,5 @@
 
+
 # MemeGen Pro - AI Sticker Maker
 
 A modern React application that turns photos into LINE-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
@@ -38,17 +39,19 @@ A modern React application that turns photos into LINE-style sticker packs using
 3.  **Environment Variables**:
     Go to your Vercel Project Settings > Environment Variables and add:
     *   `API_KEY`: Your Google Gemini API Key.
+    *   `ACCESS_CODE` (Optional): A password/code to protect your deployment. If set, users must enter this code to use the app.
     
-    *Note: If `API_KEY` is provided, the app will use it directly. If not provided, the app may attempt to use the AI Studio popup flow (which only works in specific playground environments).*
+    *Note: If `API_KEY` is provided, the app will use it directly. If `ACCESS_CODE` is set, the app will show a lock screen.*
 
 4.  Deploy! Vercel will automatically detect the React framework and build the project.
 
 ## Usage Guide
 
-1.  **Upload**: Drag and drop a photo of a person or character.
-2.  **Prompt**: Review the default prompt. It is optimized for "Q-version, LINE style, 4x6 layout, Chinese text (top-right)". Click "Generate".
-3.  **Key Selection**: If you haven't set an API_KEY env var (local dev), select your key in the popup.
-4.  **Edit**:
+1.  **Security**: If an `ACCESS_CODE` is deployed, enter it to unlock the app.
+2.  **Upload**: Drag and drop a photo of a person or character.
+3.  **Prompt**: Review the default prompt. It is optimized for "Q-version, LINE style, 4x6 layout, Chinese text (top-right)". Click "Generate".
+4.  **Key Selection**: If you haven't set an API_KEY env var (local dev), select your key in the popup.
+5.  **Edit**:
     *   Use the "White Tolerance" slider to make the background transparent.
     *   Adjust "Padding" and "Offsets" to crop the stickers tightly.
-5.  **Download**: Click "Download ZIP" to get your sticker pack.
+6.  **Download**: Click "Download ZIP" to get your sticker pack.
