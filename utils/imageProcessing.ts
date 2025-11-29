@@ -232,9 +232,8 @@ export const generateGif = async (
 
   // 3. Setup GIF Encoder
   // Use Magenta as the transparent key color.
-  // We assume the sticker doesn't use pure magenta #FF00FF.
   const transparentColor = 0xFF00FF; 
-  const transparentHex = '#FF00FF';
+  // R=255, G=0, B=255
 
   return new Promise((resolve, reject) => {
     // @ts-ignore
@@ -246,7 +245,7 @@ export const generateGif = async (
     // @ts-ignore
     const gif = new window.GIF({
       workers: 2,
-      quality: 10, // 1-30, lower is better
+      quality: 10,
       width,
       height,
       workerScript: workerUrl,
@@ -282,26 +281,58 @@ export const generateGif = async (
        if (!ctx) return;
        
        // Step A: Draw image to check bounds (invisible step)
+       ctx.clearRect(0, 0, width, height);
        ctx.drawImage(img, 0, 0);
        const rawData = ctx.getImageData(0, 0, width, height);
        const bounds = getContentBounds(rawData.data, width, height);
 
-       // Step B: Clear and Fill with Key Color for Transparency
-       // We use composite operation to ensure we overwrite everything
-       ctx.globalCompositeOperation = 'source-over';
-       ctx.fillStyle = transparentHex;
-       ctx.fillRect(0, 0, width, height);
+       // Step B: Clear and Draw Centered Image
+       ctx.clearRect(0, 0, width, height);
 
-       // Step C: Draw Centered Image
+       let destX = 0;
+       let destY = 0;
+
        if (bounds) {
            const centerX = width / 2;
            const centerY = height / 2;
            const boundCenterX = bounds.minX + bounds.w / 2;
            const boundCenterY = bounds.minY + bounds.h / 2;
-           ctx.drawImage(img, Math.round(centerX - boundCenterX), Math.round(centerY - boundCenterY));
-       } else {
-           ctx.drawImage(img, 0, 0);
+           destX = Math.round(centerX - boundCenterX);
+           destY = Math.round(centerY - boundCenterY);
        }
+       ctx.drawImage(img, destX, destY);
+
+       // Step C: Binary Alpha Thresholding
+       // This prevents "dirty" pixels (blended with background) from appearing as halos.
+       // We force pixels to be either fully Opaque (Image Color) or fully Transparent (Key Color).
+       const frameData = ctx.getImageData(0, 0, width, height);
+       const data = frameData.data;
+       const threshold = 128; // Alpha threshold (0-255)
+
+       for (let i = 0; i < data.length; i += 4) {
+           const r = data[i];
+           const g = data[i+1];
+           const b = data[i+2];
+           const a = data[i+3];
+
+           if (a < threshold) {
+               // Make completely transparent by setting to Key Color and Full Opacity
+               // gif.js will then treat this exact color as transparent.
+               data[i] = 255;   // R
+               data[i+1] = 0;   // G
+               data[i+2] = 255; // B
+               data[i+3] = 255; // Alpha must be 255 for the color to be "seen" by the encoder as the key
+           } else {
+               // Keep image pixel, but force full opacity to avoid blending artifacts during quantization
+               // Also check if the pixel accidentally matches the key color, and shift it slightly if so.
+               if (r === 255 && g === 0 && b === 255) {
+                   data[i] = 254; 
+               }
+               data[i+3] = 255;
+           }
+       }
+       
+       ctx.putImageData(frameData, 0, 0);
        
        gif.addFrame(canvas, {delay: 1000 / fps, copy: true});
     });
