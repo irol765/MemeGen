@@ -1,8 +1,5 @@
-
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
-// @ts-ignore
-import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import { GridConfig, StickerSlice } from '../types';
 
 /**
@@ -211,8 +208,8 @@ export const cropThankYouToSize = (imageSrc: string): Promise<string> => {
 };
 
 /**
- * Generates an animated GIF from sticker slices using gifenc.
- * Uses a robust RGBA-only strategy to ensure buffer alignment for Uint32Array compatibility.
+ * Generates an animated GIF from sticker slices using gif.js
+ * Centers content and handles transparency using a key color.
  */
 export const generateGif = async (
   slices: StickerSlice[], 
@@ -220,111 +217,120 @@ export const generateGif = async (
 ): Promise<string> => {
   if (slices.length === 0) return '';
   
-  const delay = Math.round(1000 / fps);
+  // 1. Load all images
   const images = await Promise.all(slices.map(s => loadImage(s.previewUrl)));
   if (images.length === 0) return '';
+
   const width = images[0].width;
   const height = images[0].height;
-  // 1. 预处理帧数据 - 保持原始透明度
-  const framesRGBA: Uint8Array[] = [];
-  for (const img of images) {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    if (!ctx) continue;
-    
-    // 重要：清除canvas为完全透明
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0);
-    
-    const imageData = ctx.getImageData(0, 0, width, height);
-    framesRGBA.push(new Uint8Array(imageData.data));
-  }
-  // 2. 改进的调色板生成 - 包含透明信息
-  const colorSamples: number[] = [];
-  const MAX_SAMPLES = 30000;
-  let sampleCount = 0;
-  for (const data of framesRGBA) {
-    for (let i = 0; i < data.length; i += 4) {
-      // 降低采样频率，但包含所有像素类型
-      if (sampleCount++ % 15 === 0) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const a = data[i + 3];
-        
-        // 只采样不透明和半透明像素，完全透明像素不加入调色板
-        if (a > 10) {
-          colorSamples.push(r, g, b);
-        }
-      }
-      if (colorSamples.length >= MAX_SAMPLES * 3) break;
+
+  // 2. Prepare gif.js Worker (Blob method to avoid cross-origin issues)
+  // Fetch the worker script text from CDN
+  const workerBlob = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
+      .then(r => r.blob());
+  const workerUrl = URL.createObjectURL(workerBlob);
+
+  // 3. Setup GIF Encoder
+  // Use Magenta as the transparent key color.
+  // We assume the sticker doesn't use pure magenta #FF00FF.
+  const transparentColor = 0xFF00FF; 
+  const transparentHex = '#FF00FF';
+
+  return new Promise((resolve, reject) => {
+    // @ts-ignore
+    if (!window.GIF) {
+        reject(new Error("gif.js library not loaded"));
+        return;
     }
-    if (colorSamples.length >= MAX_SAMPLES * 3) break;
-  }
-  // 3. 生成调色板 - 预留透明槽位
-  let palette: number[][];
-  if (colorSamples.length > 0) {
-    const pixelData = new Uint8Array(colorSamples);
-    // 生成少于256色的调色板，为透明索引留位置
-    palette = quantize(pixelData, 250, { format: 'rgb' });
-  } else {
-    palette = [[0, 0, 0]];
-  }
-  // 4. 设置透明索引 - 使用索引0作为透明索引
-  const transparentIndex = 0;
-  
-  // 构建最终调色板：索引0为透明色，后面是图像颜色
-  const finalPalette = [[0, 0, 0], ...palette];
-  // 5. 编码帧
-  const gif = new GIFEncoder();
-  for (const rgba of framesRGBA) {
-    const pixelCount = width * height;
-    
-    // 使用RGB模式应用调色板
-    const rgbData = new Uint8Array(pixelCount * 3);
-    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
-      rgbData[j] = rgba[i];     // R
-      rgbData[j + 1] = rgba[i + 1]; // G
-      rgbData[j + 2] = rgba[i + 2]; // B
-    }
-    
-    const mappedIndices = applyPalette(rgbData, palette, 'rgb');
-    const finalIndices = new Uint8Array(pixelCount);
-    for (let i = 0; i < pixelCount; i++) {
-      const alpha = rgba[i * 4 + 3];
-      
-      if (alpha < 128) {
-        // 透明像素 -> 透明索引0
-        finalIndices[i] = transparentIndex;
-      } else {
-        // 不透明像素 -> 调色板索引 + 1（因为索引0是透明色）
-        finalIndices[i] = mappedIndices[i] + 1;
-        
-        // 安全检查：确保不超出调色板范围
-        if (finalIndices[i] >= finalPalette.length) {
-          finalIndices[i] = finalPalette.length - 1;
-        }
-      }
-    }
-    gif.writeFrame(finalIndices, width, height, { 
-      palette: finalPalette, 
-      delay: delay,
-      transparent: transparentIndex,
-      dispose: 2 // 恢复到背景（透明）
+
+    // @ts-ignore
+    const gif = new window.GIF({
+      workers: 2,
+      quality: 10, // 1-30, lower is better
+      width,
+      height,
+      workerScript: workerUrl,
+      transparent: transparentColor
     });
-  }
-  gif.finish();
-  const buffer = gif.bytes();
-  const blob = new Blob([buffer], { type: 'image/gif' });
-  return URL.createObjectURL(blob);
+
+    // Helper to find content bounds for centering
+    const getContentBounds = (data: Uint8ClampedArray, w: number, h: number) => {
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        let found = false;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const alpha = data[(y * w + x) * 4 + 3];
+                if (alpha > 20) { 
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    found = true;
+                }
+            }
+        }
+        return found ? { minX, minY, maxX, maxY, w: maxX - minX + 1, h: maxY - minY + 1 } : null;
+    };
+
+    // 4. Process Frames
+    images.forEach(img => {
+       const canvas = document.createElement('canvas');
+       canvas.width = width;
+       canvas.height = height;
+       const ctx = canvas.getContext('2d', { willReadFrequently: true });
+       
+       if (!ctx) return;
+       
+       // Step A: Draw image to check bounds (invisible step)
+       ctx.drawImage(img, 0, 0);
+       const rawData = ctx.getImageData(0, 0, width, height);
+       const bounds = getContentBounds(rawData.data, width, height);
+
+       // Step B: Clear and Fill with Key Color for Transparency
+       // We use composite operation to ensure we overwrite everything
+       ctx.globalCompositeOperation = 'source-over';
+       ctx.fillStyle = transparentHex;
+       ctx.fillRect(0, 0, width, height);
+
+       // Step C: Draw Centered Image
+       if (bounds) {
+           const centerX = width / 2;
+           const centerY = height / 2;
+           const boundCenterX = bounds.minX + bounds.w / 2;
+           const boundCenterY = bounds.minY + bounds.h / 2;
+           ctx.drawImage(img, Math.round(centerX - boundCenterX), Math.round(centerY - boundCenterY));
+       } else {
+           ctx.drawImage(img, 0, 0);
+       }
+       
+       gif.addFrame(canvas, {delay: 1000 / fps, copy: true});
+    });
+
+    gif.on('finished', (blob: Blob) => {
+       const url = URL.createObjectURL(blob);
+       // Clean up worker URL to prevent memory leaks
+       URL.revokeObjectURL(workerUrl);
+       resolve(url);
+    });
+
+    gif.on('abort', () => {
+        URL.revokeObjectURL(workerUrl);
+        reject(new Error("GIF generation aborted"));
+    });
+
+    try {
+        gif.render();
+    } catch (e) {
+        URL.revokeObjectURL(workerUrl);
+        reject(e);
+    }
+  });
 };
 
 const loadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "Anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
