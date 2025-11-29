@@ -221,35 +221,12 @@ export const generateGif = async (
   if (slices.length === 0) return '';
   
   const delay = Math.round(1000 / fps);
-  
-  // 1. Load all images
   const images = await Promise.all(slices.map(s => loadImage(s.previewUrl)));
   if (images.length === 0) return '';
-
   const width = images[0].width;
   const height = images[0].height;
-
-  // 2. Pre-process frames (Center content & Get RGBA Data)
+  // 1. 预处理帧数据 - 保持原始透明度
   const framesRGBA: Uint8Array[] = [];
-
-  const getContentBounds = (data: Uint8ClampedArray, w: number, h: number) => {
-    let minX = w, minY = h, maxX = 0, maxY = 0;
-    let found = false;
-    for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-            const alpha = data[(y * w + x) * 4 + 3];
-            if (alpha > 20) { 
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-                found = true;
-            }
-        }
-    }
-    return found ? { minX, minY, maxX, maxY, w: maxX - minX + 1, h: maxY - minY + 1 } : null;
-  };
-
   for (const img of images) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -258,106 +235,89 @@ export const generateGif = async (
     
     if (!ctx) continue;
     
-    // Draw original
-    ctx.drawImage(img, 0, 0);
-    const rawData = ctx.getImageData(0, 0, width, height);
-    const bounds = getContentBounds(rawData.data, width, height);
-
-    // Clear and Redraw Centered
+    // 重要：清除canvas为完全透明
     ctx.clearRect(0, 0, width, height);
-    if (bounds) {
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const boundCenterX = bounds.minX + bounds.w / 2;
-        const boundCenterY = bounds.minY + bounds.h / 2;
-        ctx.drawImage(img, Math.round(centerX - boundCenterX), Math.round(centerY - boundCenterY));
-    } else {
-        ctx.drawImage(img, 0, 0);
-    }
+    ctx.drawImage(img, 0, 0);
     
     const imageData = ctx.getImageData(0, 0, width, height);
-    // Copy to Uint8Array to ensure standard array behavior and memory alignment
     framesRGBA.push(new Uint8Array(imageData.data));
   }
-
-  // 3. Generate Global Palette from OPAQUE pixels only
-  const opaqueSamples: number[] = [];
-  const MAX_SAMPLES = 50000; 
-  let globalPixelIndex = 0;
-
+  // 2. 改进的调色板生成 - 包含透明信息
+  const colorSamples: number[] = [];
+  const MAX_SAMPLES = 30000;
+  let sampleCount = 0;
   for (const data of framesRGBA) {
-      // Step by 4 (pixel by pixel)
-      for (let i = 0; i < data.length; i += 4) {
-          globalPixelIndex++;
-          // Stride: Sample roughly every 100th pixel to get good distribution without OOM
-          if (globalPixelIndex % 100 === 0) { 
-             if (data[i + 3] >= 128) {
-                // Only if opaque. Push RGBA (4 bytes)
-                opaqueSamples.push(data[i], data[i+1], data[i+2], 255);
-             }
-          }
-          if (opaqueSamples.length >= MAX_SAMPLES * 4) break;
+    for (let i = 0; i < data.length; i += 4) {
+      // 降低采样频率，但包含所有像素类型
+      if (sampleCount++ % 15 === 0) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+        
+        // 只采样不透明和半透明像素，完全透明像素不加入调色板
+        if (a > 10) {
+          colorSamples.push(r, g, b);
+        }
       }
-      if (opaqueSamples.length >= MAX_SAMPLES * 4) break;
+      if (colorSamples.length >= MAX_SAMPLES * 3) break;
+    }
+    if (colorSamples.length >= MAX_SAMPLES * 3) break;
   }
-
-  // Quantize (RGBA Mode)
-  // Limit to 255 colors to strictly reserve 1 slot for transparency (appended at end)
+  // 3. 生成调色板 - 预留透明槽位
   let palette: number[][];
-  if (opaqueSamples.length > 0) {
-      const pixelData = new Uint8Array(opaqueSamples);
-      // Ensure we leave room for 1 transparent color, so max 255 colors from image
-      palette = quantize(pixelData, 255, { format: 'rgba' });
+  if (colorSamples.length > 0) {
+    const pixelData = new Uint8Array(colorSamples);
+    // 生成少于256色的调色板，为透明索引留位置
+    palette = quantize(pixelData, 250, { format: 'rgb' });
   } else {
-      palette = [[0,0,0,255]]; // Fallback
+    palette = [[0, 0, 0]];
   }
-
-  // 4. Construct Final GIF Palette
-  // Extract RGB from the quantized palette
-  const paletteRGB = palette.map(p => p.slice(0, 3));
+  // 4. 设置透明索引 - 使用索引0作为透明索引
+  const transparentIndex = 0;
   
-  // Strategy: Append transparency at the end.
-  // This avoids index 0 which might be falsy-checked in some libs.
-  const transparentIndex = paletteRGB.length;
-  
-  // Append a dummy color (black) at the end for the transparent index.
-  const finalPalette = [...paletteRGB, [0, 0, 0]]; 
-
-  // 5. Encode Frames
+  // 构建最终调色板：索引0为透明色，后面是图像颜色
+  const finalPalette = [[0, 0, 0], ...palette];
+  // 5. 编码帧
   const gif = new GIFEncoder();
-
   for (const rgba of framesRGBA) {
-      const pixelCount = width * height;
+    const pixelCount = width * height;
+    
+    // 使用RGB模式应用调色板
+    const rgbData = new Uint8Array(pixelCount * 3);
+    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+      rgbData[j] = rgba[i];     // R
+      rgbData[j + 1] = rgba[i + 1]; // G
+      rgbData[j + 2] = rgba[i + 2]; // B
+    }
+    
+    const mappedIndices = applyPalette(rgbData, palette, 'rgb');
+    const finalIndices = new Uint8Array(pixelCount);
+    for (let i = 0; i < pixelCount; i++) {
+      const alpha = rgba[i * 4 + 3];
       
-      // Map pixels using RGBA format.
-      // This returns indices into `palette` (0 to palette.length-1)
-      const mappedIndices = applyPalette(rgba, palette, 'rgba');
-      
-      // Create final index buffer
-      const finalIndices = new Uint8Array(pixelCount);
-
-      for (let i = 0; i < pixelCount; i++) {
-          const alpha = rgba[i * 4 + 3];
-          if (alpha < 128) {
-              // Force transparent pixels to the transparent index
-              finalIndices[i] = transparentIndex; 
-          } else {
-              // Use mapped index directly
-              finalIndices[i] = mappedIndices[i];
-          }
+      if (alpha < 128) {
+        // 透明像素 -> 透明索引0
+        finalIndices[i] = transparentIndex;
+      } else {
+        // 不透明像素 -> 调色板索引 + 1（因为索引0是透明色）
+        finalIndices[i] = mappedIndices[i] + 1;
+        
+        // 安全检查：确保不超出调色板范围
+        if (finalIndices[i] >= finalPalette.length) {
+          finalIndices[i] = finalPalette.length - 1;
+        }
       }
-
-      gif.writeFrame(finalIndices, width, height, { 
-        palette: finalPalette, 
-        delay: delay,
-        transparent: transparentIndex, 
-        dispose: 2 // Restore to background (transparent)
-      });
+    }
+    gif.writeFrame(finalIndices, width, height, { 
+      palette: finalPalette, 
+      delay: delay,
+      transparent: transparentIndex,
+      dispose: 2 // 恢复到背景（透明）
+    });
   }
-
   gif.finish();
-  
-  const buffer = gif.bytes(); 
+  const buffer = gif.bytes();
   const blob = new Blob([buffer], { type: 'image/gif' });
   return URL.createObjectURL(blob);
 };
