@@ -4,29 +4,53 @@
 
 
 
+
+
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
-export const DEFAULT_PROMPT_ZH = `为我生成图中角色的绘制 Q 版的，LINE 风格的半身像表情包，注意头饰要正确，彩色手绘风格，使用 4x6 布局，涵盖各种各样的常用聊天语句，或是一些有关的娱乐 meme，其他需求：不要原图复制。所有标注为手写体简体中文，文字必须带有粗白色描边（以适应深色背景），标注位置为表情右上。背景必须是纯亮绿色(#00FF00)以便抠图。生成的图片需为 4K 分辨率 16:9`;
+export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格表情包。
+1. **风格要求**：使用干净、清晰的**矢量平涂风格**或**赛璐璐风格**。**严禁**使用蜡笔、粉笔、彩铅或素描质感。色彩要明亮、饱满。
+2. **布局要求**：使用 4x6 布局，单个表情包含文字大小不得超过230*230像素。
+3. **内容要求**：
+   - 涵盖各种常用的聊天语句（如：好的、谢谢、惊讶、生气、晚安等）。
+   - **动作匹配**：每个表情的动作必须与文字内容**完美贴合**且生动夸张，**严禁**所有表情使用类似的姿势，动作要有极大的区分度。
+   - 不要原图复制，要重新创作。
+4. **文字要求**：所有标注为手写简体中文，位于表情右上角。**文字必须带有粗白色描边**以适应深色背景。
+5. **技术要求**：
+   - 背景必须是纯亮绿色(#00FF00)以便抠图。
+   - 生成的图片需为 4K 分辨率 16:9。
+   - 单个表情内容需紧凑，避免过多留白。`;
 
-export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style half-body sticker pack for the character in the image. Ensure head accessories are correct. Colorful hand-drawn style. Use a 4x6 layout. Cover various common chat phrases or related entertainment memes. Do not copy the original image directly. All text should be handwritten English in the top-right corner of each sticker, with a thick white outline. Background must be solid bright green (#00FF00) for easy removal. Generated image must be 4K resolution, 16:9 aspect ratio.`;
+export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style sticker pack for the character.
+1. **Style**: Use clean, clear **vector/flat color style** or **Celluloid style**. **DO NOT** use crayon, chalk, colored pencil, or sketch textures. Colors should be bright and solid.
+2. **Layout**: Use a 4x6 grid layout. Each sticker (including text) must not exceed 230x230 pixels within the grid.
+3. **Content**:
+   - Cover various common chat phrases (e.g., OK, Thanks, Shocked, Angry, Goodnight).
+   - **Action Matching**: The action of each sticker must **perfectly match** the text/emotion. **Avoid** repetitive poses; ensure high variety in body language.
+   - Do not copy the original image directly.
+4. **Text**: Handwritten English in the top-right corner. **Text must have a thick white outline**.
+5. **Technical**:
+   - Background must be solid bright green (#00FF00) for easy removal.
+   - Image must be 4K resolution, 16:9 aspect ratio.
+   - Keep individual stickers compact.`;
 
-export const GIF_PROMPT_TEMPLATE_ZH = `为我生成图中角色的 Q 版 GIF 动画分解图（Sprite Sheet）。注意头饰要正确。彩色手绘风格，严格使用 4x6 布局，共生成24个小图片。这24个小图片必须是“{action}”这一动作的【连续关键帧分解】，组成一个流畅、循环的动画。
-1. 严禁大幅度位移，人物应保持在画面中央。
-2. 动作幅度微小且细腻，避免夸张变形。
-3. 最后一帧必须能流畅循环回第一帧。
-4. 所有小图片包含汉字“{action}”。
-5. 24个格子大小一致，图片不要越界。
-6. 背景必须是纯亮绿色(#00FF00)以便抠图，不要画网格线。
-7. 不要复制原图，重新绘制角色。图片比例16:9，4K分辨率`;
+export const GIF_PROMPT_TEMPLATE_ZH = `为我生成图中角色的 Q 版 GIF 动画分解图（Sprite Sheet）。注意头饰要正确。
+1. **风格**：干净的矢量平涂风格，严禁蜡笔质感。
+2. **布局**：严格使用 4x6 布局（共24帧），单个表情包含文字大小不得超过230*230像素。
+3. **动作**：这24个小图片必须是“{action}”这一动作的【连续关键帧分解】，组成一个流畅、循环的动画。
+   - 严禁大幅度位移，人物应保持在画面中央。
+   - 最后一帧必须能流畅循环回第一帧。
+4. **文字**：所有小图片包含手写简体中文“{action}”。
+5. **技术**：背景必须是纯亮绿色(#00FF00)以便抠图。不要画网格线。图片比例16:9，4K分辨率`;
 
-export const GIF_PROMPT_TEMPLATE_EN = `Generate a Q-version Sprite Sheet for a GIF animation of the character. Colorful hand-drawn style. STRICTLY use a [4 rows x 6 columns] layout (24 frames total). The 24 frames must represent a [continuous, smooth sequence] of keyframes for the action "{action}".
-1. The character must stay centered; avoid large horizontal displacement.
-2. Movements must be subtle and fluid, not exaggerated.
-3. The last frame must loop smoothly back to the first frame.
-4. All frames should include the text "{action}".
-5. Ensure all 24 frames are uniform in size and do not overlap.
-6. Background must be solid bright green (#00FF00) for easy removal. No grid lines.
-7. Do not copy original image. Image aspect ratio 16:9, 4K resolution.`;
+export const GIF_PROMPT_TEMPLATE_EN = `Generate a Q-version Sprite Sheet for a GIF animation of the character.
+1. **Style**: Clean vector/flat color style, NO crayon textures.
+2. **Layout**: STRICTLY use a [4 rows x 6 columns] layout (24 frames total). Each frame content must not exceed 230x230 pixels.
+3. **Action**: The 24 frames must represent a [continuous, smooth sequence] for the action "{action}".
+   - Character must stay centered.
+   - The last frame must loop smoothly back to the first frame.
+4. **Text**: All frames should include the text "{action}".
+5. **Technical**: Background must be solid bright green (#00FF00). No grid lines. Image aspect ratio 16:9, 4K resolution.`;
 
 export const BANNER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的横幅插画。`;
 export const BANNER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
@@ -76,6 +100,52 @@ export const THANKYOU_PROMPT_SUFFIX_EN = `\n\nRequirements:
 4. NO TEXT.
 5. A complete square illustration.`;
 
+export const COVER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情封面图】。`;
+export const COVER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
+1. 图片比例 1:1 (最终 230x230)。
+2. 选取最具辨识度的形象，建议使用表情形象**正面半身像或全身像**，避免只使用头部。
+3. **严禁**出现任何文字。
+4. **严禁**出现白色描边。
+5. **严禁**出现锯齿。
+6. 背景必须是纯亮绿色(#00FF00)以便抠图（最终需要透明背景）。
+7. 图片布局合理，减少留白，角色尽量填满画面。
+8. 风格为干净的矢量平涂，不要蜡笔质感。`;
+
+export const COVER_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Generate a [Sticker Pack Cover Image] for the shop.`;
+export const COVER_PROMPT_SUFFIX_EN = `\n\nRequirements:
+1. Aspect ratio 1:1 (target 230x230).
+2. Most recognizable character image, suggest using **frontal half-body or full-body**, avoid using only the head.
+3. **NO TEXT**.
+4. **NO WHITE OUTLINE**.
+5. No aliasing/jagged edges.
+6. Background must be solid bright green (#00FF00) for transparency removal.
+7. Minimize whitespace, fill the frame.
+8. Clean vector/flat style.`;
+
+export const ICON_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情图标】。`;
+export const ICON_PROMPT_SUFFIX_ZH = `\n\n详细要求：
+1. 图片比例 1:1 (最终 50x50)。
+2. 选取最具辨识度的**头部正面特写（大头照）**，画面简洁。
+3. **严禁**出现任何文字。
+4. **严禁**出现白色描边。
+5. **严禁**出现装饰元素。
+6. **严禁**出现正方形边框或直角边缘。
+7. 背景必须是纯亮绿色(#00FF00)以便抠图（最终需要透明背景）。
+8. 减少留白，头像填满画面。
+9. 风格为干净的矢量平涂，不要蜡笔质感。`;
+
+export const ICON_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Generate a [Sticker Pack Icon] for the shop.`;
+export const ICON_PROMPT_SUFFIX_EN = `\n\nRequirements:
+1. Aspect ratio 1:1 (target 50x50).
+2. Most recognizable **frontal headshot/face**, simple composition.
+3. **NO TEXT**.
+4. **NO WHITE OUTLINE**.
+5. NO decorative elements.
+6. NO square borders or hard edges.
+7. Background must be solid bright green (#00FF00) for transparency removal.
+8. Minimize whitespace.
+9. Clean vector/flat style.`;
+
 export const TRANSLATIONS = {
   en: {
     title: "MemeGen Pro",
@@ -117,6 +187,8 @@ export const TRANSLATIONS = {
     tabGif: "GIF",
     tabGuide: "Donation Guide",
     tabThankYou: "Thank You",
+    tabCover: "Cover",
+    tabIcon: "Icon",
     bannerTitle: "Promotional Banner",
     bannerDesc: "Generate a 750x400 banner for the WeChat Sticker Gallery. No text, lively colors.",
     generateBannerBtn: "Generate Banner",
@@ -138,6 +210,20 @@ export const TRANSLATIONS = {
     downloadThankYou: "Download Thank You (750x750)",
     thankYouError: "Failed to generate thank you image.",
     thankYouEmpty: "Create a heartfelt image to thank your supporters.",
+    coverTitle: "Sticker Cover",
+    coverDesc: "230x230px PNG. Recognizable half-body or full-body. No white outline, transparent background.",
+    generateCoverBtn: "Generate Cover",
+    generatingCoverBtn: "Designing Cover...",
+    downloadCover: "Download Cover (230x230)",
+    coverError: "Failed to generate cover.",
+    coverEmpty: "Create the main cover image for your sticker pack.",
+    iconTitle: "Sticker Icon",
+    iconDesc: "50x50px PNG. Clear headshot/face only. No text, no border, transparent background.",
+    generateIconBtn: "Generate Icon",
+    generatingIconBtn: "Designing Icon...",
+    downloadIcon: "Download Icon (50x50)",
+    iconError: "Failed to generate icon.",
+    iconEmpty: "Create the small icon for the sticker list.",
     frameRate: "Animation Speed",
     fps: "FPS",
     step1Title: "Step 1: Frame Editor",
@@ -193,6 +279,8 @@ export const TRANSLATIONS = {
     tabGif: "动态预览",
     tabGuide: "赞赏引导图",
     tabThankYou: "赞赏致谢图",
+    tabCover: "表情封面",
+    tabIcon: "表情图标",
     bannerTitle: "商城横幅",
     bannerDesc: "生成适用于微信表情商城的 750x400 像素横幅。无文字，色调活泼。",
     generateBannerBtn: "生成横幅",
@@ -214,6 +302,20 @@ export const TRANSLATIONS = {
     downloadThankYou: "下载致谢图 (750x750)",
     thankYouError: "致谢图生成失败，请重试。",
     thankYouEmpty: "制作一张充满诚意的致谢图，感谢你的支持者。",
+    coverTitle: "表情封面",
+    coverDesc: "230x230像素 PNG。最具辨识度的正面半身/全身像。无白边，透明背景。",
+    generateCoverBtn: "生成封面",
+    generatingCoverBtn: "正在设计封面...",
+    downloadCover: "下载封面 (230x230)",
+    coverError: "封面生成失败，请重试。",
+    coverEmpty: "制作一张最具代表性的表情包封面图。",
+    iconTitle: "表情图标",
+    iconDesc: "50x50像素 PNG。清晰头部正面特写。无文字、无边框、无装饰，透明背景。",
+    generateIconBtn: "生成图标",
+    generatingIconBtn: "正在设计图标...",
+    downloadIcon: "下载图标 (50x50)",
+    iconError: "图标生成失败，请重试。",
+    iconEmpty: "制作一张简洁清晰的表情包列表图标。",
     frameRate: "动画速度",
     fps: "帧率",
     step1Title: "第一步：帧编辑",

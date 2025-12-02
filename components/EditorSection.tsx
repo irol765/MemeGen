@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { GridConfig, StickerSlice, Language, AppMode } from '../types';
 import { removeBackground, sliceImageToBlobs, createAndDownloadZip, generateGif } from '../utils/imageProcessing';
-import { Download, Grid, Layers, Eraser, RefreshCw, Move, Image as ImageIcon, Sparkles, Film, PlayCircle, Minus, Plus, Heart, Gift, Settings2, Play } from 'lucide-react';
+import { Download, Grid, Layers, Eraser, RefreshCw, Move, Image as ImageIcon, Sparkles, Film, PlayCircle, Minus, Plus, Heart, Gift, Settings2, Play, LayoutTemplate, SquareUser } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 
 interface NumberControlProps {
@@ -75,6 +75,16 @@ interface EditorSectionProps {
   thankYouImage: string | null;
   isGeneratingThankYou: boolean;
   thankYouError: string | null;
+
+  onGenerateCover: () => void;
+  coverImage: string | null;
+  isGeneratingCover: boolean;
+  coverError: string | null;
+
+  onGenerateIcon: () => void;
+  iconImage: string | null;
+  isGeneratingIcon: boolean;
+  iconError: string | null;
   
   mode: AppMode;
 }
@@ -99,9 +109,19 @@ const EditorSection: React.FC<EditorSectionProps> = ({
   isGeneratingThankYou,
   thankYouError,
 
+  onGenerateCover,
+  coverImage,
+  isGeneratingCover,
+  coverError,
+
+  onGenerateIcon,
+  iconImage,
+  isGeneratingIcon,
+  iconError,
+
   mode
 }) => {
-  const [activeTab, setActiveTab] = useState<'stickers' | 'banner' | 'gif' | 'guide' | 'thankYou'>('stickers');
+  const [activeTab, setActiveTab] = useState<'stickers' | 'banner' | 'gif' | 'guide' | 'thankYou' | 'cover' | 'icon'>('stickers');
 
   useEffect(() => {
     if (mode === AppMode.GIF) {
@@ -215,6 +235,43 @@ const EditorSection: React.FC<EditorSectionProps> = ({
     link.click();
   };
 
+  const handleDownloadCover = async () => {
+    if (!coverImage) return;
+    // Apply background removal using current tolerance before download
+    try {
+        const transparent = await removeBackground(coverImage, config.tolerance);
+        const link = document.createElement('a');
+        link.href = transparent;
+        link.download = 'wechat_cover_230x230.png';
+        link.click();
+    } catch (e) {
+        console.error("Failed to process cover background", e);
+        // Fallback
+        const link = document.createElement('a');
+        link.href = coverImage;
+        link.download = 'wechat_cover_230x230_raw.png';
+        link.click();
+    }
+  };
+
+  const handleDownloadIcon = async () => {
+    if (!iconImage) return;
+    // Apply background removal using current tolerance before download
+    try {
+        const transparent = await removeBackground(iconImage, config.tolerance);
+        const link = document.createElement('a');
+        link.href = transparent;
+        link.download = 'wechat_icon_50x50.png';
+        link.click();
+    } catch (e) {
+        console.error("Failed to process icon background", e);
+        const link = document.createElement('a');
+        link.href = iconImage;
+        link.download = 'wechat_icon_50x50_raw.png';
+        link.click();
+    }
+  };
+
   const handleDownloadGif = () => {
       if (!gifUrl) return;
       const link = document.createElement('a');
@@ -260,6 +317,9 @@ const EditorSection: React.FC<EditorSectionProps> = ({
           {mode === AppMode.GIF && (
              <TabButton id="gif" label={t.tabGif} icon={Film} active={activeTab === 'gif'} />
           )}
+
+          <TabButton id="cover" label={t.tabCover} icon={LayoutTemplate} active={activeTab === 'cover'} />
+          <TabButton id="icon" label={t.tabIcon} icon={SquareUser} active={activeTab === 'icon'} />
 
           <TabButton id="banner" label={t.tabBanner} icon={ImageIcon} active={activeTab === 'banner'} />
           <TabButton id="guide" label={t.tabGuide} icon={Heart} active={activeTab === 'guide'} />
@@ -553,8 +613,8 @@ const EditorSection: React.FC<EditorSectionProps> = ({
         </div>
       )}
 
-      {/* Helper Component for Single Image Generation (Banner, Guide, Thank You) */}
-      {['banner', 'guide', 'thankYou'].includes(activeTab) && (
+      {/* Helper Component for Single Image Generation (Banner, Guide, Thank You, Cover, Icon) */}
+      {['banner', 'guide', 'thankYou', 'cover', 'icon'].includes(activeTab) && (
         <div className="max-w-4xl mx-auto animate-fade-in-up space-y-8">
             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 text-center">
                 
@@ -580,25 +640,55 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                         {thankYouError && <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{thankYouError}</div>}
                     </>
                 )}
+                {activeTab === 'cover' && (
+                    <>
+                        <h3 className="text-2xl font-bold text-slate-800 mb-2">{t.coverTitle}</h3>
+                        <p className="text-slate-500 mb-8 max-w-lg mx-auto">{t.coverDesc}</p>
+                        {coverError && <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{coverError}</div>}
+                    </>
+                )}
+                {activeTab === 'icon' && (
+                    <>
+                        <h3 className="text-2xl font-bold text-slate-800 mb-2">{t.iconTitle}</h3>
+                        <p className="text-slate-500 mb-8 max-w-lg mx-auto">{t.iconDesc}</p>
+                        {iconError && <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{iconError}</div>}
+                    </>
+                )}
 
                 {/* Empty State */}
                 {((activeTab === 'banner' && !bannerImage && !isGeneratingBanner) ||
                   (activeTab === 'guide' && !guideImage && !isGeneratingGuide) ||
-                  (activeTab === 'thankYou' && !thankYouImage && !isGeneratingThankYou)) && (
+                  (activeTab === 'thankYou' && !thankYouImage && !isGeneratingThankYou) ||
+                  (activeTab === 'cover' && !coverImage && !isGeneratingCover) ||
+                  (activeTab === 'icon' && !iconImage && !isGeneratingIcon)) && (
                     <div className="flex flex-col items-center">
                         <div className={`w-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center mb-6
-                            ${activeTab === 'banner' ? 'aspect-[2/1]' : activeTab === 'guide' ? 'aspect-[4/3]' : 'aspect-square max-w-[500px]'}`}
+                            ${activeTab === 'banner' ? 'aspect-[2/1]' : 
+                              activeTab === 'guide' ? 'aspect-[4/3]' : 
+                              activeTab === 'icon' ? 'aspect-square max-w-[200px]' : 
+                              'aspect-square max-w-[500px]'}`}
                         >
                             <p className="text-slate-400 font-medium">
-                                {activeTab === 'banner' ? t.bannerEmpty : activeTab === 'guide' ? t.guideEmpty : t.thankYouEmpty}
+                                {activeTab === 'banner' ? t.bannerEmpty : 
+                                 activeTab === 'guide' ? t.guideEmpty : 
+                                 activeTab === 'thankYou' ? t.thankYouEmpty :
+                                 activeTab === 'cover' ? t.coverEmpty : t.iconEmpty}
                             </p>
                         </div>
                         <button
-                            onClick={activeTab === 'banner' ? onGenerateBanner : activeTab === 'guide' ? onGenerateGuide : onGenerateThankYou}
+                            onClick={
+                                activeTab === 'banner' ? onGenerateBanner : 
+                                activeTab === 'guide' ? onGenerateGuide : 
+                                activeTab === 'thankYou' ? onGenerateThankYou :
+                                activeTab === 'cover' ? onGenerateCover : onGenerateIcon
+                            }
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95"
                         >
                             <Sparkles size={20} />
-                            {activeTab === 'banner' ? t.generateBannerBtn : activeTab === 'guide' ? t.generateGuideBtn : t.generateThankYouBtn}
+                            {activeTab === 'banner' ? t.generateBannerBtn : 
+                             activeTab === 'guide' ? t.generateGuideBtn : 
+                             activeTab === 'thankYou' ? t.generateThankYouBtn :
+                             activeTab === 'cover' ? t.generateCoverBtn : t.generateIconBtn}
                         </button>
                     </div>
                 )}
@@ -606,16 +696,24 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                 {/* Loading State */}
                 {((activeTab === 'banner' && isGeneratingBanner) ||
                   (activeTab === 'guide' && isGeneratingGuide) ||
-                  (activeTab === 'thankYou' && isGeneratingThankYou)) && (
+                  (activeTab === 'thankYou' && isGeneratingThankYou) ||
+                  (activeTab === 'cover' && isGeneratingCover) ||
+                  (activeTab === 'icon' && isGeneratingIcon)) && (
                      <div className="flex flex-col items-center">
                         <div className={`w-full bg-slate-50 rounded-2xl border-2 border-slate-100 flex items-center justify-center mb-6 relative overflow-hidden
-                             ${activeTab === 'banner' ? 'aspect-[2/1]' : activeTab === 'guide' ? 'aspect-[4/3]' : 'aspect-square max-w-[500px]'}`}
+                             ${activeTab === 'banner' ? 'aspect-[2/1]' : 
+                               activeTab === 'guide' ? 'aspect-[4/3]' : 
+                               activeTab === 'icon' ? 'aspect-square max-w-[200px]' : 
+                               'aspect-square max-w-[500px]'}`}
                         >
                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" style={{ transform: 'skewX(-20deg)' }} />
                              <div className="flex flex-col items-center gap-3 z-10">
                                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 border-t-indigo-600"></div>
                                 <span className="text-indigo-600 font-medium">
-                                    {activeTab === 'banner' ? t.generatingBannerBtn : activeTab === 'guide' ? t.generatingGuideBtn : t.generatingThankYouBtn}
+                                    {activeTab === 'banner' ? t.generatingBannerBtn : 
+                                     activeTab === 'guide' ? t.generatingGuideBtn : 
+                                     activeTab === 'thankYou' ? t.generatingThankYouBtn :
+                                     activeTab === 'cover' ? t.generatingCoverBtn : t.generatingIconBtn}
                                 </span>
                              </div>
                         </div>
@@ -625,28 +723,59 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                 {/* Result State */}
                 {((activeTab === 'banner' && bannerImage && !isGeneratingBanner) ||
                   (activeTab === 'guide' && guideImage && !isGeneratingGuide) ||
-                  (activeTab === 'thankYou' && thankYouImage && !isGeneratingThankYou)) && (
+                  (activeTab === 'thankYou' && thankYouImage && !isGeneratingThankYou) ||
+                  (activeTab === 'cover' && coverImage && !isGeneratingCover) ||
+                  (activeTab === 'icon' && iconImage && !isGeneratingIcon)) && (
                      <div className="flex flex-col items-center">
                          <div className={`w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-200 mb-6 relative group
-                              ${activeTab === 'thankYou' ? 'max-w-[500px]' : ''}`}
+                              ${activeTab === 'thankYou' || activeTab === 'cover' ? 'max-w-[500px]' : 
+                                activeTab === 'icon' ? 'max-w-[200px]' : ''}`}
                          >
                             <img 
-                                src={activeTab === 'banner' ? bannerImage! : activeTab === 'guide' ? guideImage! : thankYouImage!} 
+                                src={activeTab === 'banner' ? bannerImage! : 
+                                     activeTab === 'guide' ? guideImage! : 
+                                     activeTab === 'thankYou' ? thankYouImage! :
+                                     activeTab === 'cover' ? coverImage! : iconImage!} 
                                 alt="Generated Result" 
                                 className="w-full h-auto" 
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                            {/* Checkerboard bg for transparency indication */}
+                            <div className="absolute inset-0 -z-10" style={checkerboardStyle}></div>
                          </div>
+                         
+                         {(activeTab === 'cover' || activeTab === 'icon') && (
+                            <div className="mb-6 w-full max-w-md bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-start gap-3">
+                                <Eraser className="flex-none text-indigo-600 mt-1" size={18} />
+                                <div className="text-left text-sm text-indigo-800">
+                                    <p className="font-bold mb-1">Background Removal Active</p>
+                                    <p>The green background will be automatically removed when you click download. Use the <strong>Background Removal</strong> slider in the Stickers tab to adjust sensitivity if needed.</p>
+                                </div>
+                            </div>
+                         )}
+
                          <div className="flex gap-3">
                             <button
-                                onClick={activeTab === 'banner' ? handleDownloadBanner : activeTab === 'guide' ? handleDownloadGuide : handleDownloadThankYou}
+                                onClick={
+                                    activeTab === 'banner' ? handleDownloadBanner : 
+                                    activeTab === 'guide' ? handleDownloadGuide : 
+                                    activeTab === 'thankYou' ? handleDownloadThankYou :
+                                    activeTab === 'cover' ? handleDownloadCover : handleDownloadIcon
+                                }
                                 className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95"
                             >
                                 <Download size={20} />
-                                {activeTab === 'banner' ? t.downloadBanner : activeTab === 'guide' ? t.downloadGuide : t.downloadThankYou}
+                                {activeTab === 'banner' ? t.downloadBanner : 
+                                 activeTab === 'guide' ? t.downloadGuide : 
+                                 activeTab === 'thankYou' ? t.downloadThankYou :
+                                 activeTab === 'cover' ? t.downloadCover : t.downloadIcon}
                             </button>
                              <button
-                                onClick={activeTab === 'banner' ? onGenerateBanner : activeTab === 'guide' ? onGenerateGuide : onGenerateThankYou}
+                                onClick={
+                                    activeTab === 'banner' ? onGenerateBanner : 
+                                    activeTab === 'guide' ? onGenerateGuide : 
+                                    activeTab === 'thankYou' ? onGenerateThankYou :
+                                    activeTab === 'cover' ? onGenerateCover : onGenerateIcon
+                                }
                                 className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl border border-slate-200 flex items-center gap-2"
                             >
                                 <RefreshCw size={18} />

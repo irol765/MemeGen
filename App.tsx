@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
@@ -24,10 +21,18 @@ import {
     THANKYOU_PROMPT_PREFIX_ZH,
     THANKYOU_PROMPT_SUFFIX_ZH,
     THANKYOU_PROMPT_PREFIX_EN,
-    THANKYOU_PROMPT_SUFFIX_EN
+    THANKYOU_PROMPT_SUFFIX_EN,
+    COVER_PROMPT_PREFIX_ZH,
+    COVER_PROMPT_SUFFIX_ZH,
+    COVER_PROMPT_PREFIX_EN,
+    COVER_PROMPT_SUFFIX_EN,
+    ICON_PROMPT_PREFIX_ZH,
+    ICON_PROMPT_SUFFIX_ZH,
+    ICON_PROMPT_PREFIX_EN,
+    ICON_PROMPT_SUFFIX_EN
 } from './constants';
-import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou } from './services/gemini';
-import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
+import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou, generateStickerCover, generateStickerIcon } from './services/gemini';
+import { cropBannerToSize, cropGuideToSize, cropThankYouToSize, cropCoverToSize, cropIconToSize } from './utils/imageProcessing';
 import { Camera, Globe, Lock, ArrowRight } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -62,6 +67,16 @@ const App: React.FC = () => {
   const [thankYouImage, setThankYouImage] = useState<string | null>(null);
   const [isGeneratingThankYou, setIsGeneratingThankYou] = useState(false);
   const [thankYouError, setThankYouError] = useState<string | null>(null);
+
+  // Cover Image State
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+
+  // Icon Image State
+  const [iconImage, setIconImage] = useState<string | null>(null);
+  const [isGeneratingIcon, setIsGeneratingIcon] = useState(false);
+  const [iconError, setIconError] = useState<string | null>(null);
 
   const t = TRANSLATIONS[language];
 
@@ -130,6 +145,8 @@ const App: React.FC = () => {
     setBannerImage(null); // Reset banner on new sticker gen
     setGuideImage(null);
     setThankYouImage(null);
+    setCoverImage(null);
+    setIconImage(null);
 
     try {
       const resultBase64 = await generateStickerSheet(uploadedFile, prompt);
@@ -147,6 +164,8 @@ const App: React.FC = () => {
     setBannerImage(null);
     setGuideImage(null);
     setThankYouImage(null);
+    setCoverImage(null);
+    setIconImage(null);
     setError(null);
     
     const reader = new FileReader();
@@ -228,6 +247,52 @@ const App: React.FC = () => {
     }
   };
 
+  const handleGenerateCover = async () => {
+    if (!uploadedFile) return;
+    
+    setIsGeneratingCover(true);
+    setCoverError(null);
+
+    try {
+        const prefix = language === 'zh' ? COVER_PROMPT_PREFIX_ZH : COVER_PROMPT_PREFIX_EN;
+        const suffix = language === 'zh' ? COVER_PROMPT_SUFFIX_ZH : COVER_PROMPT_SUFFIX_EN;
+        const coverPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
+        
+        const rawCover = await generateStickerCover(uploadedFile, coverPrompt);
+        const croppedCover = await cropCoverToSize(rawCover);
+        
+        setCoverImage(croppedCover);
+    } catch (err: any) {
+        console.error("Cover generation failed", err);
+        setCoverError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+    } finally {
+        setIsGeneratingCover(false);
+    }
+  };
+
+  const handleGenerateIcon = async () => {
+    if (!uploadedFile) return;
+    
+    setIsGeneratingIcon(true);
+    setIconError(null);
+
+    try {
+        const prefix = language === 'zh' ? ICON_PROMPT_PREFIX_ZH : ICON_PROMPT_PREFIX_EN;
+        const suffix = language === 'zh' ? ICON_PROMPT_SUFFIX_ZH : ICON_PROMPT_SUFFIX_EN;
+        const iconPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
+        
+        const rawIcon = await generateStickerIcon(uploadedFile, iconPrompt);
+        const croppedIcon = await cropIconToSize(rawIcon);
+        
+        setIconImage(croppedIcon);
+    } catch (err: any) {
+        console.error("Icon generation failed", err);
+        setIconError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+    } finally {
+        setIsGeneratingIcon(false);
+    }
+  };
+
   const handleReset = () => {
     setStep(AppStep.UPLOAD);
     setUploadedFile(null);
@@ -235,6 +300,8 @@ const App: React.FC = () => {
     setBannerImage(null);
     setGuideImage(null);
     setThankYouImage(null);
+    setCoverImage(null);
+    setIconImage(null);
     setMode(AppMode.STICKERS);
     setActionText('');
     setPrompt(language === 'zh' ? DEFAULT_PROMPT_ZH : DEFAULT_PROMPT_EN);
@@ -397,6 +464,16 @@ const App: React.FC = () => {
                          thankYouImage={thankYouImage}
                          isGeneratingThankYou={isGeneratingThankYou}
                          thankYouError={thankYouError}
+
+                         onGenerateCover={handleGenerateCover}
+                         coverImage={coverImage}
+                         isGeneratingCover={isGeneratingCover}
+                         coverError={coverError}
+
+                         onGenerateIcon={handleGenerateIcon}
+                         iconImage={iconImage}
+                         isGeneratingIcon={isGeneratingIcon}
+                         iconError={iconError}
         
                          mode={mode}
                        />

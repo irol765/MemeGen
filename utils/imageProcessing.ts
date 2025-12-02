@@ -1,3 +1,4 @@
+
 import JSZip from 'jszip';
 import saveAs from 'file-saver';
 import { GridConfig, StickerSlice } from '../types';
@@ -187,6 +188,10 @@ const cropImageToSize = (imageSrc: string, targetWidth: number, targetHeight: nu
             const x = (targetWidth - w) / 2;
             const y = (targetHeight - h) / 2;
 
+            // Use better interpolation for downsizing
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
             ctx.drawImage(img, x, y, w, h);
             resolve(canvas.toDataURL('image/png'));
         };
@@ -205,6 +210,14 @@ export const cropGuideToSize = (imageSrc: string): Promise<string> => {
 
 export const cropThankYouToSize = (imageSrc: string): Promise<string> => {
     return cropImageToSize(imageSrc, 750, 750);
+};
+
+export const cropCoverToSize = (imageSrc: string): Promise<string> => {
+    return cropImageToSize(imageSrc, 230, 230);
+};
+
+export const cropIconToSize = (imageSrc: string): Promise<string> => {
+    return cropImageToSize(imageSrc, 50, 50);
 };
 
 /**

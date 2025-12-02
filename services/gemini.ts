@@ -172,6 +172,72 @@ export const generateDonationThankYou = async (
   return extractImageFromResponse(response);
 };
 
+export const generateStickerCover = async (
+  imageFile: File,
+  fullPrompt: string
+): Promise<string> => {
+  let ai = await getAIClient();
+  const base64Image = await fileToBase64(imageFile);
+  const cleanBase64 = base64Image.split(',')[1];
+
+  const generateParams = {
+    model: MODEL_NAME,
+    contents: {
+      parts: [
+        { text: fullPrompt },
+        {
+          inlineData: {
+            mimeType: imageFile.type,
+            data: cleanBase64,
+          },
+        },
+      ],
+    },
+    config: {
+      imageConfig: {
+          aspectRatio: "1:1", // Target 230x230
+          imageSize: "1K" // Sufficient for 230px
+      },
+    },
+  };
+
+  const response = await generateWithRetry(ai, generateParams);
+  return extractImageFromResponse(response);
+};
+
+export const generateStickerIcon = async (
+  imageFile: File,
+  fullPrompt: string
+): Promise<string> => {
+  let ai = await getAIClient();
+  const base64Image = await fileToBase64(imageFile);
+  const cleanBase64 = base64Image.split(',')[1];
+
+  const generateParams = {
+    model: MODEL_NAME,
+    contents: {
+      parts: [
+        { text: fullPrompt },
+        {
+          inlineData: {
+            mimeType: imageFile.type,
+            data: cleanBase64,
+          },
+        },
+      ],
+    },
+    config: {
+      imageConfig: {
+          aspectRatio: "1:1", // Target 50x50
+          imageSize: "1K" // Sufficient
+      },
+    },
+  };
+
+  const response = await generateWithRetry(ai, generateParams);
+  return extractImageFromResponse(response);
+};
+
 const extractImageFromResponse = (response: any): string => {
   if (response.candidates && response.candidates[0].content.parts) {
     for (const part of response.candidates[0].content.parts) {
