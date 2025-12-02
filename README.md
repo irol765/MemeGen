@@ -1,18 +1,27 @@
-
-
 # MemeGen Pro - AI Sticker Maker
 
-A modern React application that turns photos into LINE-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
+[中文文档](README_zh.md)
+
+A modern React application that turns photos into LINE/WeChat-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
 
 ## Features
 
-1.  **AI Generation**: Uses `gemini-3-pro-image-preview` to generate high-quality, 4K resolution sticker sheets (4x6 layout) from a reference photo.
-2.  **Smart Editor**:
-    *   **Background Removal**: Client-side algorithm to remove white backgrounds and make stickers transparent.
-    *   **Slicing**: Automatically cuts the grid into individual PNG files based on customizable rows/columns and padding. Includes Offset (X/Y) controls to perfectly frame each sticker.
-3.  **Export**: Downloads the sticker set as a ZIP file.
-4.  **Customizable Prompts**: Adjust the generation style and text language.
-5.  **Multi-language Support**: Switch between English and Chinese interfaces.
+1.  **AI Generation**: Uses `gemini-3-pro-image-preview` to generate high-quality, 4K resolution sticker sheets from a reference photo.
+2.  **Multi-Mode Support**:
+    *   **Sticker Sheet**: Generates a 4x6 grid of static stickers.
+    *   **Animated GIF**: Generates a sprite sheet and synthesizes it into a looping GIF animation.
+3.  **Shop Asset Generator**: Automatically designs all required assets for sticker shops (WeChat/LINE):
+    *   **Banner**: Promotional banner (750x400).
+    *   **Cover**: Main package cover (230x230).
+    *   **Icon**: Small list icon (50x50).
+    *   **Donation Guide**: Image to encourage donations (750x560).
+    *   **Thank You Image**: Image shown after donation (750x750).
+4.  **Smart Editor**:
+    *   **Background Removal**: Client-side algorithm (Chroma Key) to remove the generated green screen background.
+    *   **Slicing**: Automatically cuts grids into individual PNG files.
+    *   **GIF Synthesis**: Compiles frames into a smooth GIF with adjustable FPS.
+5.  **Export**: Downloads sticker sets as ZIP files or individual assets as PNGs.
+6.  **Security**: Optional access code protection for deployments.
 
 ## Prerequisites
 
@@ -49,9 +58,10 @@ A modern React application that turns photos into LINE-style sticker packs using
 
 1.  **Security**: If an `ACCESS_CODE` is deployed, enter it to unlock the app.
 2.  **Upload**: Drag and drop a photo of a person or character.
-3.  **Prompt**: Review the default prompt. It is optimized for "Q-version, LINE style, 4x6 layout, Chinese text (top-right)". Click "Generate".
-4.  **Key Selection**: If you haven't set an API_KEY env var (local dev), select your key in the popup.
-5.  **Edit**:
-    *   Use the "White Tolerance" slider to make the background transparent.
-    *   Adjust "Padding" and "Offsets" to crop the stickers tightly.
-6.  **Download**: Click "Download ZIP" to get your sticker pack.
+3.  **Prompt**: 
+    *   **Stickers**: Uses an optimized prompt for "Q-version, LINE style, 4x6 layout".
+    *   **GIF**: Enter a specific action (e.g., "Running") to generate a sprite sheet.
+4.  **Edit & Export**:
+    *   **Sticker Sheet**: Adjust "Color Tolerance" to remove the green background. Slice and download as ZIP.
+    *   **GIF**: Adjust grid to frame the action, select FPS, and synthesize the GIF.
+    *   **Shop Assets**: Switch tabs (Banner, Cover, Icon, etc.) to generate and download specific store assets.
