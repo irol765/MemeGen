@@ -2,8 +2,6 @@
 
 [English Documentation](README.md)
 
-![image](https://github.com/irol765/MemeGen/blob/main/img/cn.png)
-
 这是一个现代化的 React 应用程序，利用 Google 的 Gemini 3 Pro (Nano Banana Pro) 模型将您的照片变成 LINE/微信 风格的表情包。
 
 ## 功能特性

@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
@@ -35,7 +32,7 @@ import {
 } from './constants';
 import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou, generateStickerCover, generateStickerIcon } from './services/gemini';
 import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
-import { Camera, Globe, Lock, ArrowRight } from 'lucide-react';
+import { Camera, Globe, Lock, ArrowRight, Github } from 'lucide-react';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.UPLOAD);
@@ -309,10 +306,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/50 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/50 flex flex-col">
       
       {/* Header */}
-      <header className="w-full bg-white/80 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-50">
+      <header className="w-full bg-white/80 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-50 flex-none">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-indigo-600 p-2 rounded-lg text-white">
@@ -323,6 +320,15 @@ const App: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+             <a 
+                href="https://github.com/irol765/MemeGen" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-slate-500 hover:text-indigo-600 transition-colors p-1"
+                title="View on GitHub"
+             >
+                <Github size={20} />
+             </a>
              <button 
               onClick={toggleLanguage}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-colors"
@@ -338,7 +344,7 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 pt-12">
+      <main className="max-w-7xl mx-auto px-6 pt-12 flex-grow w-full">
         
         {!isAuthorized ? (
             <div className="min-h-[60vh] flex items-center justify-center animate-fade-in-up">
@@ -484,6 +490,17 @@ const App: React.FC = () => {
         )}
 
       </main>
+
+      {/* Footer */}
+      <footer className="w-full py-6 mt-12 border-t border-indigo-100/50 bg-white/40 backdrop-blur-sm flex-none">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center justify-center gap-2 text-slate-400 text-sm">
+             <p>© {new Date().getFullYear()} irol765. All rights reserved.</p>
+             <a href="https://github.com/irol765/MemeGen" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                <Github size={14} />
+                <span>GitHub</span>
+             </a>
+          </div>
+      </footer>
     </div>
   );
 };
