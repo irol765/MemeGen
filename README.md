@@ -2,6 +2,9 @@
 
 [中文文档](README_zh.md)
 
+![image](https://github.com/irol765/MemeGen/blob/main/img/en.png)
+
+
 A modern React application that turns photos into LINE/WeChat-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
 
 ## Features
