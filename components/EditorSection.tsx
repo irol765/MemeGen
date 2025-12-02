@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { GridConfig, StickerSlice, Language, AppMode } from '../types';
 import { removeBackground, sliceImageToBlobs, createAndDownloadZip, generateGif, cropCoverToSize, cropIconToSize } from '../utils/imageProcessing';
-import { Download, Grid, Layers, Eraser, RefreshCw, Move, Image as ImageIcon, Sparkles, Film, PlayCircle, Minus, Plus, Heart, Gift, Settings2, Play, LayoutTemplate, SquareUser } from 'lucide-react';
+import { Download, Grid, Layers, Eraser, RefreshCw, Move, Image as ImageIcon, Sparkles, Film, PlayCircle, Minus, Plus, Heart, Gift, Settings2, Play, LayoutTemplate, SquareUser, Loader2 } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 
 interface NumberControlProps {
@@ -143,7 +144,10 @@ const EditorSection: React.FC<EditorSectionProps> = ({
   
   // States for real-time preview of background removal on Cover and Icon
   const [processedCover, setProcessedCover] = useState<string | null>(null);
+  const [isProcessingCover, setIsProcessingCover] = useState(false);
+  
   const [processedIcon, setProcessedIcon] = useState<string | null>(null);
+  const [isProcessingIcon, setIsProcessingIcon] = useState(false);
   
   // GIF State
   const [gifUrl, setGifUrl] = useState<string | null>(null);
@@ -174,12 +178,15 @@ const EditorSection: React.FC<EditorSectionProps> = ({
         setProcessedCover(null);
         return;
     }
+    setIsProcessingCover(true);
     const timer = setTimeout(async () => {
       try {
         const result = await removeBackground(coverImage, config.tolerance);
         setProcessedCover(result);
       } catch (e) {
         console.error("Cover BG Removal failed", e);
+      } finally {
+        setIsProcessingCover(false);
       }
     }, 200);
     return () => clearTimeout(timer);
@@ -191,12 +198,15 @@ const EditorSection: React.FC<EditorSectionProps> = ({
         setProcessedIcon(null);
         return;
     }
+    setIsProcessingIcon(true);
     const timer = setTimeout(async () => {
       try {
         const result = await removeBackground(iconImage, config.tolerance);
         setProcessedIcon(result);
       } catch (e) {
         console.error("Icon BG Removal failed", e);
+      } finally {
+        setIsProcessingIcon(false);
       }
     }, 200);
     return () => clearTimeout(timer);
@@ -779,16 +789,23 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                               ${activeTab === 'thankYou' || activeTab === 'cover' ? 'max-w-[500px]' : 
                                 activeTab === 'icon' ? 'max-w-[200px]' : ''}`}
                          >
+                             {/* Display Logic for Cover/Icon: Show processed version if available (preview bg removal), else raw */}
+                            {(activeTab === 'cover' && isProcessingCover) || (activeTab === 'icon' && isProcessingIcon) ? (
+                                <div className="absolute inset-0 z-20 bg-white/50 flex items-center justify-center">
+                                    <Loader2 className="animate-spin text-indigo-600" size={32} />
+                                </div>
+                            ) : null}
+
                             <img 
                                 src={activeTab === 'banner' ? bannerImage! : 
                                      activeTab === 'guide' ? guideImage! : 
                                      activeTab === 'thankYou' ? thankYouImage! :
                                      activeTab === 'cover' ? (processedCover || coverImage!) : (processedIcon || iconImage!)} 
                                 alt="Generated Result" 
-                                className="w-full h-auto" 
+                                className="w-full h-auto relative z-10" 
                             />
                             {/* Checkerboard bg for transparency indication */}
-                            <div className="absolute inset-0 -z-10" style={checkerboardStyle}></div>
+                            <div className="absolute inset-0 z-0" style={checkerboardStyle}></div>
                          </div>
                          
                          {(activeTab === 'cover' || activeTab === 'icon') && (

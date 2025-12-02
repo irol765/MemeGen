@@ -1,3 +1,5 @@
+
+
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
 export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格表情包。
@@ -66,7 +68,7 @@ export const GUIDE_PROMPT_SUFFIX_ZH = `\n\n详细要求：
 2. 画面要表现出“期待支持”、“求赞赏”或“比心”的可爱神态，吸引用户打赏。
 3. 风格必须与之前的表情包完全一致。
 4. 不要包含任何文字。
-5. 背景不能是纯白，要丰满精美。`;
+5. **背景严禁使用绿色**。必须是绘制精美的、有丰富细节的装饰性背景（如爱心、光芒、星星等图案）。不要留白，不要纯色背景。`;
 
 export const GUIDE_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Based on this character style, generate a [Donation Guide Image] for the sticker shop.`;
 export const GUIDE_PROMPT_SUFFIX_EN = `\n\nRequirements:
@@ -74,7 +76,7 @@ export const GUIDE_PROMPT_SUFFIX_EN = `\n\nRequirements:
 2. The character should look expectant, asking for support, or making a heart gesture to attract donations.
 3. Style must be exactly consistent with the stickers.
 4. NO TEXT.
-5. Background should be colorful and complete.`;
+5. **Background MUST NOT be green**. It must be a fully painted, detailed decorative background (e.g. hearts, sparkles, stars). NO solid colors.`;
 
 export const THANKYOU_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【赞赏致谢图】。`;
 export const THANKYOU_PROMPT_SUFFIX_ZH = `\n\n详细要求：
@@ -82,7 +84,7 @@ export const THANKYOU_PROMPT_SUFFIX_ZH = `\n\n详细要求：
 2. 画面要表现出极大的感激、开心、庆祝、鞠躬或飞吻的动作。
 3. 风格必须与之前的表情包完全一致。
 4. 不要包含任何文字。
-5. 是一张完整的正方形插画。`;
+5. 是一张完整的正方形插画。**背景严禁使用绿色**，背景必须是绘制精美的装饰性背景。不要纯色背景。`;
 
 export const THANKYOU_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Based on this character style, generate a [Donation Thank You Image] for the sticker shop.`;
 export const THANKYOU_PROMPT_SUFFIX_EN = `\n\nRequirements:
@@ -90,7 +92,7 @@ export const THANKYOU_PROMPT_SUFFIX_EN = `\n\nRequirements:
 2. Character should express huge gratitude, happiness, celebration, bowing, or blowing a kiss.
 3. Style must be exactly consistent with the stickers.
 4. NO TEXT.
-5. A complete square illustration.`;
+5. A complete square illustration. **Background MUST NOT be green**. Use a detailed decorative background. NO solid colors.`;
 
 export const COVER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情封面图】。`;
 export const COVER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
@@ -99,7 +101,7 @@ export const COVER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
 3. **严禁**出现任何文字。
 4. **严禁**出现白色描边。
 5. **严禁**出现锯齿或模糊。
-6. **背景优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**严禁**出现任何阴影、渐变、地面投影、纹理或光照效果。背景颜色必须绝对均匀，以便完美自动抠图。
+6. **自动抠图优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**绝对不可有**投影、阴影、环境光遮蔽、渐变、纹理或光照效果。背景色块必须完全均匀，以便程序一键移除。
 7. 图片布局合理，角色尽量填满画面，减少留白。
 8. 风格为干净的矢量平涂，颜色鲜艳。`;
 
@@ -110,31 +112,31 @@ export const COVER_PROMPT_SUFFIX_EN = `\n\nRequirements:
 3. **NO TEXT**.
 4. **NO WHITE OUTLINE**.
 5. No aliasing/jagged edges.
-6. **Background**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection**, for perfect automatic removal.
+6. **Background Optimization**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection, NO ambient occlusion**. The green must be perfectly uniform for automatic removal.
 7. Minimize whitespace, fill the frame.
 8. Clean vector/flat style.`;
 
 export const ICON_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情图标】。`;
 export const ICON_PROMPT_SUFFIX_ZH = `\n\n详细要求：
-1. **图片分辨率必须是 4K 超高清** (Ultra HD)。即使缩小到 50x50 像素也必须清晰。
-2. **小尺寸优化**：选取最具辨识度的**头部正面特写**。**线条要粗，对比度要高，去掉细碎的细节**，确保在极小尺寸下依然清晰可辨。
+1. **图片分辨率必须是 4K 超高清** (Ultra HD)。
+2. **小尺寸优化**：选取最具辨识度的**头部正面特写**。**线条必须加粗，对比度要高，去除细碎的细节**，确保缩小到 50x50 像素时依然清晰可辨。
 3. **严禁**出现任何文字。
 4. **严禁**出现白色描边。
 5. **严禁**出现装饰元素。
 6. **严禁**出现正方形边框或直角边缘。
-7. **背景优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**严禁**任何阴影、渐变、地面投影、纹理或光照效果。背景颜色必须绝对均匀，以便完美自动抠图。
+7. **自动抠图优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**绝对不可有**投影、阴影、环境光遮蔽、渐变或纹理。背景必须是死板的纯绿色。
 8. 减少留白，头像尽量填满画面（占比>80%）。
 9. 风格为干净的矢量平涂。`;
 
 export const ICON_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Generate a [Sticker Pack Icon] for the shop.`;
 export const ICON_PROMPT_SUFFIX_EN = `\n\nRequirements:
 1. **Resolution must be 4K Ultra HD**.
-2. **Small Size Optimization**: Most recognizable **frontal headshot**. Use **bold lines, high contrast, and simple details**. Ensure it is readable even when resized to 50x50 pixels.
+2. **Small Size Optimization**: Most recognizable **frontal headshot**. Use **bold lines, high contrast, and simplified details**. Ensure it is readable even when resized to 50x50 pixels.
 3. **NO TEXT**.
 4. **NO WHITE OUTLINE**.
 5. NO decorative elements.
 6. NO square borders or hard edges.
-7. **Background**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection**, for perfect automatic removal.
+7. **Background Optimization**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection**. The green must be perfectly uniform.
 8. Minimize whitespace. Face should occupy >80% of image.
 9. Clean vector/flat style.`;
 
