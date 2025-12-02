@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { GridConfig, StickerSlice, Language, AppMode } from '../types';
-import { removeBackground, sliceImageToBlobs, createAndDownloadZip, generateGif } from '../utils/imageProcessing';
+import { removeBackground, sliceImageToBlobs, createAndDownloadZip, generateGif, cropCoverToSize, cropIconToSize } from '../utils/imageProcessing';
 import { Download, Grid, Layers, Eraser, RefreshCw, Move, Image as ImageIcon, Sparkles, Film, PlayCircle, Minus, Plus, Heart, Gift, Settings2, Play, LayoutTemplate, SquareUser } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 
@@ -142,6 +141,10 @@ const EditorSection: React.FC<EditorSectionProps> = ({
   const [slices, setSlices] = useState<StickerSlice[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // States for real-time preview of background removal on Cover and Icon
+  const [processedCover, setProcessedCover] = useState<string | null>(null);
+  const [processedIcon, setProcessedIcon] = useState<string | null>(null);
+  
   // GIF State
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [fps, setFps] = useState<number>(8);
@@ -151,7 +154,7 @@ const EditorSection: React.FC<EditorSectionProps> = ({
 
   const t = TRANSLATIONS[lang];
   
-  // Debounce effect for background removal
+  // Debounce effect for background removal (Main Sticker Sheet)
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
@@ -164,6 +167,41 @@ const EditorSection: React.FC<EditorSectionProps> = ({
     }, 200);
     return () => clearTimeout(timer);
   }, [initialImageSrc, config.tolerance]);
+
+  // Debounce effect for background removal (Cover)
+  useEffect(() => {
+    if (!coverImage) {
+        setProcessedCover(null);
+        return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await removeBackground(coverImage, config.tolerance);
+        setProcessedCover(result);
+      } catch (e) {
+        console.error("Cover BG Removal failed", e);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [coverImage, config.tolerance]);
+
+  // Debounce effect for background removal (Icon)
+  useEffect(() => {
+    if (!iconImage) {
+        setProcessedIcon(null);
+        return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await removeBackground(iconImage, config.tolerance);
+        setProcessedIcon(result);
+      } catch (e) {
+        console.error("Icon BG Removal failed", e);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [iconImage, config.tolerance]);
+
 
   // Effect to re-slice when grid or processed image changes
   useEffect(() => {
@@ -237,11 +275,16 @@ const EditorSection: React.FC<EditorSectionProps> = ({
 
   const handleDownloadCover = async () => {
     if (!coverImage) return;
-    // Apply background removal using current tolerance before download
+    // We now receive the high-res image.
+    // 1. Remove background on high-res first
     try {
-        const transparent = await removeBackground(coverImage, config.tolerance);
+        // Use processedCover if available to match preview, otherwise process fresh
+        const transparentHighRes = processedCover || await removeBackground(coverImage, config.tolerance);
+        // 2. Resize/Crop to 230x230
+        const finalImage = await cropCoverToSize(transparentHighRes);
+        
         const link = document.createElement('a');
-        link.href = transparent;
+        link.href = finalImage;
         link.download = 'wechat_cover_230x230.png';
         link.click();
     } catch (e) {
@@ -256,11 +299,16 @@ const EditorSection: React.FC<EditorSectionProps> = ({
 
   const handleDownloadIcon = async () => {
     if (!iconImage) return;
-    // Apply background removal using current tolerance before download
+    // We now receive the high-res image.
+    // 1. Remove background on high-res first (cleaner edges)
     try {
-        const transparent = await removeBackground(iconImage, config.tolerance);
+        // Use processedIcon if available to match preview, otherwise process fresh
+        const transparentHighRes = processedIcon || await removeBackground(iconImage, config.tolerance);
+        // 2. Resize/Crop to 50x50
+        const finalImage = await cropIconToSize(transparentHighRes);
+
         const link = document.createElement('a');
-        link.href = transparent;
+        link.href = finalImage;
         link.download = 'wechat_icon_50x50.png';
         link.click();
     } catch (e) {
@@ -735,7 +783,7 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                                 src={activeTab === 'banner' ? bannerImage! : 
                                      activeTab === 'guide' ? guideImage! : 
                                      activeTab === 'thankYou' ? thankYouImage! :
-                                     activeTab === 'cover' ? coverImage! : iconImage!} 
+                                     activeTab === 'cover' ? (processedCover || coverImage!) : (processedIcon || iconImage!)} 
                                 alt="Generated Result" 
                                 className="w-full h-auto" 
                             />
@@ -747,9 +795,22 @@ const EditorSection: React.FC<EditorSectionProps> = ({
                             <div className="mb-6 w-full max-w-md bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-start gap-3">
                                 <Eraser className="flex-none text-indigo-600 mt-1" size={18} />
                                 <div className="text-left text-sm text-indigo-800">
-                                    <p className="font-bold mb-1">Background Removal Active</p>
-                                    <p>The green background will be automatically removed when you click download. Use the <strong>Background Removal</strong> slider in the Stickers tab to adjust sensitivity if needed.</p>
+                                    <p className="font-bold mb-1">{t.bgRemovalActive}</p>
+                                    <p>{t.bgRemovalActiveDesc}</p>
                                 </div>
+                            </div>
+                         )}
+
+                         {(activeTab === 'cover' || activeTab === 'icon') && (
+                            <div className="w-full max-w-md mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                  <NumberControl
+                                    label={t.tolerance}
+                                    value={config.tolerance}
+                                    min={0}
+                                    max={50}
+                                    onChange={(val) => setConfig({...config, tolerance: val})}
+                                    suffix="%"
+                                 />
                             </div>
                          )}
 

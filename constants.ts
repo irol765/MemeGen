@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
 export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格表情包。
@@ -102,48 +94,48 @@ export const THANKYOU_PROMPT_SUFFIX_EN = `\n\nRequirements:
 
 export const COVER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情封面图】。`;
 export const COVER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
-1. 图片比例 1:1 (最终 230x230)。
-2. 选取最具辨识度的形象，建议使用表情形象**正面半身像或全身像**，避免只使用头部。
+1. **图片分辨率必须是 4K 超高清** (Ultra HD)，细节极其丰富，线条锐利，无压缩痕迹。
+2. 选取最具辨识度的形象，建议使用表情形象**正面半身像或全身像**。
 3. **严禁**出现任何文字。
 4. **严禁**出现白色描边。
-5. **严禁**出现锯齿。
-6. 背景必须是纯亮绿色(#00FF00)以便抠图（最终需要透明背景）。
-7. 图片布局合理，减少留白，角色尽量填满画面。
-8. 风格为干净的矢量平涂，不要蜡笔质感。`;
+5. **严禁**出现锯齿或模糊。
+6. **背景优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**严禁**出现任何阴影、渐变、地面投影、纹理或光照效果。背景颜色必须绝对均匀，以便完美自动抠图。
+7. 图片布局合理，角色尽量填满画面，减少留白。
+8. 风格为干净的矢量平涂，颜色鲜艳。`;
 
 export const COVER_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Generate a [Sticker Pack Cover Image] for the shop.`;
 export const COVER_PROMPT_SUFFIX_EN = `\n\nRequirements:
-1. Aspect ratio 1:1 (target 230x230).
-2. Most recognizable character image, suggest using **frontal half-body or full-body**, avoid using only the head.
+1. **Resolution must be 4K Ultra HD**. Extremely sharp details, clean lines.
+2. Most recognizable character image, suggest using **frontal half-body or full-body**.
 3. **NO TEXT**.
 4. **NO WHITE OUTLINE**.
 5. No aliasing/jagged edges.
-6. Background must be solid bright green (#00FF00) for transparency removal.
+6. **Background**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection**, for perfect automatic removal.
 7. Minimize whitespace, fill the frame.
 8. Clean vector/flat style.`;
 
 export const ICON_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的【表情图标】。`;
 export const ICON_PROMPT_SUFFIX_ZH = `\n\n详细要求：
-1. 图片比例 1:1 (最终 50x50)。
-2. 选取最具辨识度的**头部正面特写（大头照）**，画面简洁。
+1. **图片分辨率必须是 4K 超高清** (Ultra HD)。即使缩小到 50x50 像素也必须清晰。
+2. **小尺寸优化**：选取最具辨识度的**头部正面特写**。**线条要粗，对比度要高，去掉细碎的细节**，确保在极小尺寸下依然清晰可辨。
 3. **严禁**出现任何文字。
 4. **严禁**出现白色描边。
 5. **严禁**出现装饰元素。
 6. **严禁**出现正方形边框或直角边缘。
-7. 背景必须是纯亮绿色(#00FF00)以便抠图（最终需要透明背景）。
-8. 减少留白，头像填满画面。
-9. 风格为干净的矢量平涂，不要蜡笔质感。`;
+7. **背景优化**：背景必须是**纯平涂亮绿色(#00FF00)** (Solid Flat Green)。**严禁**任何阴影、渐变、地面投影、纹理或光照效果。背景颜色必须绝对均匀，以便完美自动抠图。
+8. 减少留白，头像尽量填满画面（占比>80%）。
+9. 风格为干净的矢量平涂。`;
 
 export const ICON_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Generate a [Sticker Pack Icon] for the shop.`;
 export const ICON_PROMPT_SUFFIX_EN = `\n\nRequirements:
-1. Aspect ratio 1:1 (target 50x50).
-2. Most recognizable **frontal headshot/face**, simple composition.
+1. **Resolution must be 4K Ultra HD**.
+2. **Small Size Optimization**: Most recognizable **frontal headshot**. Use **bold lines, high contrast, and simple details**. Ensure it is readable even when resized to 50x50 pixels.
 3. **NO TEXT**.
 4. **NO WHITE OUTLINE**.
 5. NO decorative elements.
 6. NO square borders or hard edges.
-7. Background must be solid bright green (#00FF00) for transparency removal.
-8. Minimize whitespace.
+7. **Background**: Must be **Solid Flat Green (#00FF00)**. **NO shadows, NO gradients, NO texture, NO floor projection**, for perfect automatic removal.
+8. Minimize whitespace. Face should occupy >80% of image.
 9. Clean vector/flat style.`;
 
 export const TRANSLATIONS = {
@@ -237,7 +229,9 @@ export const TRANSLATIONS = {
     authDesc: "This service is protected. Please enter the access code to continue.",
     authPlaceholder: "Enter Access Code",
     authButton: "Unlock App",
-    authError: "Incorrect access code. Please try again."
+    authError: "Incorrect access code. Please try again.",
+    bgRemovalActive: "Background Removal Active",
+    bgRemovalActiveDesc: "The green background will be automatically removed when you click download. Adjust the **Color Tolerance** slider below if needed."
   },
   zh: {
     title: "MemeGen Pro",
@@ -329,6 +323,8 @@ export const TRANSLATIONS = {
     authDesc: "本服务受保护，请输入部署时设置的安全码以继续使用。",
     authPlaceholder: "请输入安全码",
     authButton: "解锁应用",
-    authError: "安全码错误，请重试。"
+    authError: "安全码错误，请重试。",
+    bgRemovalActive: "自动抠图已启用",
+    bgRemovalActiveDesc: "绿色背景将在下载时自动移除。如下载后背景未去除干净，请调整下方的“颜色容差”滑块。"
   }
 };

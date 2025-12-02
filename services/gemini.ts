@@ -97,7 +97,7 @@ export const generateBanner = async (
     config: {
       imageConfig: {
           aspectRatio: "16:9", // Closest to 750x400
-          imageSize: "2K"
+          imageSize: "4K"
       },
     },
   };
@@ -130,7 +130,7 @@ export const generateDonationGuide = async (
     config: {
       imageConfig: {
           aspectRatio: "4:3", // Closest to 750x560
-          imageSize: "2K"
+          imageSize: "4K"
       },
     },
   };
@@ -163,7 +163,7 @@ export const generateDonationThankYou = async (
     config: {
       imageConfig: {
           aspectRatio: "1:1", // 750x750 is 1:1
-          imageSize: "2K"
+          imageSize: "4K"
       },
     },
   };
@@ -196,7 +196,7 @@ export const generateStickerCover = async (
     config: {
       imageConfig: {
           aspectRatio: "1:1", // Target 230x230
-          imageSize: "1K" // Sufficient for 230px
+          imageSize: "4K" // Maximum resolution for best downsampling quality
       },
     },
   };
@@ -229,7 +229,7 @@ export const generateStickerIcon = async (
     config: {
       imageConfig: {
           aspectRatio: "1:1", // Target 50x50
-          imageSize: "1K" // Sufficient
+          imageSize: "4K" // Maximum resolution for best downsampling quality
       },
     },
   };

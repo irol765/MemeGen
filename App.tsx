@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
@@ -32,7 +34,7 @@ import {
     ICON_PROMPT_SUFFIX_EN
 } from './constants';
 import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou, generateStickerCover, generateStickerIcon } from './services/gemini';
-import { cropBannerToSize, cropGuideToSize, cropThankYouToSize, cropCoverToSize, cropIconToSize } from './utils/imageProcessing';
+import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
 import { Camera, Globe, Lock, ArrowRight } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -259,9 +261,8 @@ const App: React.FC = () => {
         const coverPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
         const rawCover = await generateStickerCover(uploadedFile, coverPrompt);
-        const croppedCover = await cropCoverToSize(rawCover);
-        
-        setCoverImage(croppedCover);
+        // Do NOT crop yet. We keep it high res for better bg removal in EditorSection.
+        setCoverImage(rawCover);
     } catch (err: any) {
         console.error("Cover generation failed", err);
         setCoverError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
@@ -282,9 +283,8 @@ const App: React.FC = () => {
         const iconPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
         const rawIcon = await generateStickerIcon(uploadedFile, iconPrompt);
-        const croppedIcon = await cropIconToSize(rawIcon);
-        
-        setIconImage(croppedIcon);
+        // Do NOT crop yet. We keep it high res for better bg removal in EditorSection.
+        setIconImage(rawIcon);
     } catch (err: any) {
         console.error("Icon generation failed", err);
         setIconError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
