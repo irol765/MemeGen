@@ -29,21 +29,21 @@ export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style sticker pack 
    - Keep individual stickers compact.`;
 
 export const GIF_PROMPT_TEMPLATE_ZH = `为我生成图中角色的 Q 版 GIF 动画分解图（Sprite Sheet）。注意头饰要正确。
-1. **风格**：干净的矢量平涂风格，严禁蜡笔质感。
-2. **布局**：严格使用 4x6 布局（共24帧），单个表情包含文字大小不得超过230*230像素。
+1. **风格**：干净的矢量平涂风格，严禁蜡笔质感。**角色主体必须带有粗白色描边**，以保证在深色背景下清晰可见。
+2. **布局**：严格使用 4x6 布局（共24帧），单个图案大小不得超过230*230像素。
 3. **动作**：这24个小图片必须是“{action}”这一动作的【连续关键帧分解】，组成一个流畅、循环的动画。
    - 严禁大幅度位移，人物应保持在画面中央。
    - 最后一帧必须能流畅循环回第一帧。
-4. **文字**：所有小图片包含手写简体中文“{action}”。
+4. **文字**：**严禁**包含任何文字。只展示动作。
 5. **技术**：背景必须是纯亮绿色(#00FF00)以便抠图。不要画网格线。图片比例16:9，4K分辨率`;
 
 export const GIF_PROMPT_TEMPLATE_EN = `Generate a Q-version Sprite Sheet for a GIF animation of the character.
-1. **Style**: Clean vector/flat color style, NO crayon textures.
+1. **Style**: Clean vector/flat color style, NO crayon textures. **Character must have a thick white outline** for visibility on dark backgrounds.
 2. **Layout**: STRICTLY use a [4 rows x 6 columns] layout (24 frames total). Each frame content must not exceed 230x230 pixels.
 3. **Action**: The 24 frames must represent a [continuous, smooth sequence] for the action "{action}".
    - Character must stay centered.
    - The last frame must loop smoothly back to the first frame.
-4. **Text**: All frames should include the text "{action}".
+4. **Text**: **NO TEXT**. Show the action only.
 5. **Technical**: Background must be solid bright green (#00FF00). No grid lines. Image aspect ratio 16:9, 4K resolution.`;
 
 export const BANNER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的横幅插画。`;
