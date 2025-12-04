@@ -4,6 +4,7 @@
 
 ![image](https://github.com/irol765/MemeGen/blob/main/img/en.png)
 
+[Demo](https://memedemo.puzhenyi.net)
 
 A modern React application that turns photos into LINE/WeChat-style sticker packs using Google's Gemini 3 Pro (Nano Banana Pro) model.
 
@@ -55,9 +56,7 @@ You can run MemeGen Pro locally using Docker Compose.
 2.  **Run with Docker Compose**:
     ```bash
     docker-compose up -d
-    ```
-    *Note: The setup uses `Dockerfile.md` by default due to file creation restrictions. If you rename it to standard `Dockerfile`, please update `docker-compose.yml` accordingly.*
-    
+    ```    
 3.  **Access the App**:
     Open `http://localhost:3000` in your browser.
 

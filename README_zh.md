@@ -4,6 +4,8 @@
 
 ![image](https://github.com/irol765/MemeGen/blob/main/img/cn.png)
 
+[Demo](https://memedemo.puzhenyi.net)
+
 这是一个现代化的 React 应用程序，利用 Google 的 Gemini 3 Pro (Nano Banana Pro) 模型将您的照片变成 LINE/微信 风格的表情包。
 
 ## 功能特性
@@ -56,8 +58,6 @@
     ```bash
     docker-compose up -d
     ```
-    *注：由于文件创建限制，配置文件目前指向 `Dockerfile.md`。如您后续将其重命名为标准的 `Dockerfile`，请记得同步修改 `docker-compose.yml`。*
-
 3.  **访问应用**:
     在浏览器中打开 `http://localhost:3000`。
 

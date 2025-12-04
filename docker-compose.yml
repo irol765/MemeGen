@@ -3,7 +3,7 @@ services:
   memegen:
     build: 
       context: .
-      dockerfile: Dockerfile.md
+      dockerfile: Dockerfile
     ports:
       - "3000:80"
     environment:
