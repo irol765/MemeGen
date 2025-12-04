@@ -247,7 +247,11 @@ export const TRANSLATIONS = {
     proxyLabel: "OpenAI Compatible Interface",
     proxyNote: "Enable this if using a 3rd party proxy (NewAPI/OneAPI) that expects OpenAI chat format.",
     saveSettings: "Save Settings",
-    cancel: "Cancel"
+    cancel: "Cancel",
+
+    // Editor
+    editPrompt: "Edit",
+    previewPrompt: "Preview",
   },
   zh: {
     title: "MemeGen Pro",
@@ -355,6 +359,10 @@ export const TRANSLATIONS = {
     proxyLabel: "OpenAI 兼容模式",
     proxyNote: "如果您使用第三方代理（如 NewAPI/OneAPI）并需要 OpenAI 格式，请开启此项。",
     saveSettings: "保存设置",
-    cancel: "取消"
+    cancel: "取消",
+    
+    // Editor
+    editPrompt: "编辑",
+    previewPrompt: "预览",
   }
 };

@@ -1,7 +1,7 @@
 
 
-import React from 'react';
-import { Sparkles, ArrowRight, Grid, Film, Image as ImageIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, ArrowRight, Grid, Film, Image as ImageIcon, FileText, Eye } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 import { Language, AppMode } from '../types';
 
@@ -19,6 +19,39 @@ interface PromptSectionProps {
   setActionText: (s: string) => void;
 }
 
+// Simple internal Markdown Renderer to avoid extra dependencies
+const SimpleMarkdownRenderer = ({ content }: { content: string }) => {
+  return (
+    <div className="w-full h-full p-4 overflow-y-auto text-sm text-slate-700 space-y-2 font-normal">
+      {content.split('\n').map((line, i) => {
+        const trimmed = line.trim();
+        // Handle bolding: **text**
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+        const renderedLine = parts.map((part, j) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={j} className="text-indigo-700 font-bold">{part.slice(2, -2)}</strong>;
+          }
+          return part;
+        });
+
+        // Simple List Rendering
+        if (trimmed.match(/^(\d+\.|-|\*)\s/)) {
+           return (
+             <div key={i} className="flex gap-2 pl-2">
+               <span className="text-indigo-400 font-bold select-none">•</span>
+               <div>{renderedLine}</div>
+             </div>
+           );
+        }
+
+        if (trimmed === '') return <div key={i} className="h-2" />;
+
+        return <div key={i}>{renderedLine}</div>;
+      })}
+    </div>
+  );
+};
+
 const PromptSection: React.FC<PromptSectionProps> = ({ 
   prompt, 
   setPrompt, 
@@ -34,6 +67,7 @@ const PromptSection: React.FC<PromptSectionProps> = ({
 }) => {
   const previewUrl = previewImage ? URL.createObjectURL(previewImage) : '';
   const t = TRANSLATIONS[lang];
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview'); // Default to preview for nicer look
 
   return (
     <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
@@ -97,20 +131,53 @@ const PromptSection: React.FC<PromptSectionProps> = ({
         )}
 
         {/* Prompt Area */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <label className="block text-sm font-semibold text-slate-700 mb-3">
-            {mode === AppMode.GIF ? t.promptLabel + " (Auto-Generated)" : t.promptLabel}
-          </label>
-          <textarea
-            className={`w-full h-40 p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none text-slate-700 leading-relaxed text-sm bg-slate-50 ${mode === AppMode.GIF ? 'opacity-70' : ''}`}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={t.promptPlaceholder}
-            readOnly={mode === AppMode.GIF} // Readonly in GIF mode as it is templated
-          />
-          <p className="text-xs text-slate-400 mt-2 text-right">
-             {t.model}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-100">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-slate-50/50">
+             <label className="text-sm font-semibold text-slate-700">
+                {mode === AppMode.GIF ? t.promptLabel + " (Auto-Generated)" : t.promptLabel}
+             </label>
+             <div className="flex bg-slate-200 rounded-lg p-0.5">
+                <button 
+                  onClick={() => setViewMode('edit')}
+                  disabled={mode === AppMode.GIF}
+                  className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${viewMode === 'edit' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${mode === AppMode.GIF ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <FileText size={12} /> {t.editPrompt}
+                </button>
+                <button 
+                  onClick={() => setViewMode('preview')}
+                  className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${viewMode === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  <Eye size={12} /> {t.previewPrompt}
+                </button>
+             </div>
+          </div>
+          
+          <div className="relative h-60 bg-slate-50/30">
+            {viewMode === 'edit' && mode !== AppMode.GIF ? (
+              <textarea
+                className="w-full h-full p-4 border-none outline-none resize-none text-slate-700 leading-relaxed text-sm bg-transparent font-mono"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={t.promptPlaceholder}
+              />
+            ) : (
+              <SimpleMarkdownRenderer content={prompt} />
+            )}
+            
+            {/* Read-only overlay for GIF mode if needed, though viewMode switch handles most of it */}
+            {mode === AppMode.GIF && viewMode === 'edit' && (
+                <div className="absolute inset-0 bg-slate-50/50 flex items-center justify-center text-slate-400 text-sm">
+                   Preview Only
+                </div>
+            )}
+          </div>
+          
+          <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-end">
+             <p className="text-xs text-slate-400">
+                {t.model}
+             </p>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">
