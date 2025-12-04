@@ -23,12 +23,15 @@ A modern React application that turns photos into LINE/WeChat-style sticker pack
     *   **Background Removal**: Client-side algorithm (Chroma Key) to remove the generated green screen background.
     *   **Slicing**: Automatically cuts grids into individual PNG files.
     *   **GIF Synthesis**: Compiles frames into a smooth GIF with adjustable FPS.
-5.  **Export**: Downloads sticker sets as ZIP files or individual assets as PNGs.
-6.  **Security**: Optional access code protection for deployments.
+5.  **Custom API Settings**:
+    *   **BYO Key**: Users can input their own Google Gemini API Key in the frontend.
+    *   **Proxy Support**: Supports OpenAI-compatible API proxies (e.g., NewAPI/OneAPI) with custom Base URL configuration.
+6.  **Export**: Downloads sticker sets as ZIP files or individual assets as PNGs.
+7.  **Security**: Optional access code protection for deployments.
 
 ## Prerequisites
 
-*   Node.js 18+
+*   Node.js 18+ (for local dev) or Docker
 *   A Google Cloud Project with Gemini API enabled.
 *   **Important**: This app uses the paid `gemini-3-pro-image-preview` model.
 
@@ -44,6 +47,28 @@ A modern React application that turns photos into LINE/WeChat-style sticker pack
     npm start
     ```
 
+## Docker Deployment
+
+You can run MemeGen Pro locally using Docker Compose.
+
+1.  **Clone the repository**.
+2.  **Run with Docker Compose**:
+    ```bash
+    docker-compose up -d
+    ```
+    *Note: The setup uses `Dockerfile.md` by default due to file creation restrictions. If you rename it to standard `Dockerfile`, please update `docker-compose.yml` accordingly.*
+    
+3.  **Access the App**:
+    Open `http://localhost:3000` in your browser.
+
+4.  **Configuration**:
+    You can set environment variables in `docker-compose.yml` or create a `.env` file:
+    ```env
+    API_KEY=your_google_api_key_here
+    ACCESS_CODE=optional_password_protection
+    ```
+    *If `API_KEY` is not set in the environment, the app will prompt the user to enter it via the Settings UI.*
+
 ## Deployment on Vercel
 
 1.  Push this code to a GitHub repository.
@@ -51,7 +76,7 @@ A modern React application that turns photos into LINE/WeChat-style sticker pack
 3.  **Environment Variables**:
     Go to your Vercel Project Settings > Environment Variables and add:
     *   `API_KEY`: Your Google Gemini API Key.
-    *   `ACCESS_CODE` (Optional): A password/code to protect your deployment. If set, users must enter this code to use the app.
+    *   `ACCESS_CODE` (Optional): A password/code to protect your deployment.
     
     *Note: If `API_KEY` is provided, the app will use it directly. If `ACCESS_CODE` is set, the app will show a lock screen.*
 
@@ -60,11 +85,12 @@ A modern React application that turns photos into LINE/WeChat-style sticker pack
 ## Usage Guide
 
 1.  **Security**: If an `ACCESS_CODE` is deployed, enter it to unlock the app.
-2.  **Upload**: Drag and drop a photo of a person or character.
-3.  **Prompt**: 
+2.  **Settings**: Click the gear icon to configure API keys or Proxy URLs if not set on the server.
+3.  **Upload**: Drag and drop a photo of a person or character.
+4.  **Prompt**: 
     *   **Stickers**: Uses an optimized prompt for "Q-version, LINE style, 4x6 layout".
     *   **GIF**: Enter a specific action (e.g., "Running") to generate a sprite sheet.
-4.  **Edit & Export**:
+5.  **Edit & Export**:
     *   **Sticker Sheet**: Adjust "Color Tolerance" to remove the green background. Slice and download as ZIP.
     *   **GIF**: Adjust grid to frame the action, select FPS, and synthesize the GIF.
     *   **Shop Assets**: Switch tabs (Banner, Cover, Icon, etc.) to generate and download specific store assets.
