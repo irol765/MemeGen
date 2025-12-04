@@ -17,8 +17,6 @@ export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格�
 
 export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style sticker pack for the character.
 1. **Style**: Use clean, clear **vector/flat color style** or **Celluloid style**. **DO NOT** use crayon, chalk, colored pencil, or sketch textures. Colors should be bright and solid, Ensure the headgear is properly worn and should not display any brand logos anywhere.
-
-.
 2. **Layout**: Use a 4x6 grid layout. Each sticker (including text) must not exceed 230x230 pixels within the grid.
 3. **Content**:
    - Cover various common chat phrases (e.g., OK, Thanks, Shocked, Angry, Goodnight).
