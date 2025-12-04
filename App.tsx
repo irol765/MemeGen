@@ -1,8 +1,11 @@
+
+
 import React, { useState, useEffect } from 'react';
 import UploadSection from './components/UploadSection';
 import PromptSection from './components/PromptSection';
 import EditorSection from './components/EditorSection';
-import { AppStep, Language, AppMode } from './types';
+import SettingsModal from './components/SettingsModal';
+import { AppStep, Language, AppMode, AppSettings } from './types';
 import { 
     DEFAULT_PROMPT_ZH, 
     DEFAULT_PROMPT_EN, 
@@ -32,7 +35,7 @@ import {
 } from './constants';
 import { generateStickerSheet, generateBanner, generateDonationGuide, generateDonationThankYou, generateStickerCover, generateStickerIcon } from './services/gemini';
 import { cropBannerToSize, cropGuideToSize, cropThankYouToSize } from './utils/imageProcessing';
-import { Camera, Globe, Lock, ArrowRight, Github } from 'lucide-react';
+import { Camera, Globe, Lock, ArrowRight, Github, Settings as SettingsIcon } from 'lucide-react';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.UPLOAD);
@@ -44,6 +47,14 @@ const App: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [accessCodeInput, setAccessCodeInput] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Settings State
+  const [settings, setSettings] = useState<AppSettings>({
+    apiKey: '',
+    baseUrl: '',
+    useOpenAIFormat: false
+  });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Prompt State
   const [prompt, setPrompt] = useState<string>(DEFAULT_PROMPT_ZH);
@@ -78,6 +89,19 @@ const App: React.FC = () => {
   const [iconError, setIconError] = useState<string | null>(null);
 
   const t = TRANSLATIONS[language];
+  const hasEnvKey = !!process.env.API_KEY && process.env.API_KEY !== '""';
+
+  // Load Settings from LocalStorage
+  useEffect(() => {
+     const stored = localStorage.getItem('memegen_settings');
+     if (stored) {
+         try {
+             setSettings(JSON.parse(stored));
+         } catch (e) {
+             console.error("Failed to parse settings", e);
+         }
+     }
+  }, []);
 
   // Check auth on load
   useEffect(() => {
@@ -87,6 +111,25 @@ const App: React.FC = () => {
          setIsAuthorized(true);
      }
   }, []);
+
+  // Auto-open settings if no key is found
+  useEffect(() => {
+      // Small delay to ensure localStorage load finished
+      const timer = setTimeout(() => {
+          if (!hasEnvKey && !settings.apiKey && !isAuthorized && !process.env.ACCESS_CODE) {
+              // Only prompt if not locked by auth code (if locked, user deals with auth first)
+              setIsSettingsOpen(true);
+          } else if (!hasEnvKey && !settings.apiKey && isAuthorized) {
+              setIsSettingsOpen(true);
+          }
+      }, 500);
+      return () => clearTimeout(timer);
+  }, [hasEnvKey, settings.apiKey, isAuthorized]);
+
+  const handleSaveSettings = (newSettings: AppSettings) => {
+      setSettings(newSettings);
+      localStorage.setItem('memegen_settings', JSON.stringify(newSettings));
+  };
 
   const handleAuthSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -117,7 +160,6 @@ const App: React.FC = () => {
   useEffect(() => {
       if (mode === AppMode.GIF) {
           const template = language === 'zh' ? GIF_PROMPT_TEMPLATE_ZH : GIF_PROMPT_TEMPLATE_EN;
-          // If action is empty, just show placeholders to avoid confusion in preview, but validation blocks generation
           const displayAction = actionText || (language === 'zh' ? '指定动作' : 'ACTION');
           const filledPrompt = template.split("{action}").join(displayAction);
           setPrompt(filledPrompt);
@@ -139,6 +181,12 @@ const App: React.FC = () => {
   const handleGenerate = async () => {
     if (!uploadedFile) return;
 
+    // Check key before generating
+    if (!hasEnvKey && !settings.apiKey) {
+        setIsSettingsOpen(true);
+        return;
+    }
+
     setStep(AppStep.GENERATING);
     setError(null);
     setBannerImage(null); // Reset banner on new sticker gen
@@ -148,12 +196,12 @@ const App: React.FC = () => {
     setIconImage(null);
 
     try {
-      const resultBase64 = await generateStickerSheet(uploadedFile, prompt);
+      const resultBase64 = await generateStickerSheet(uploadedFile, prompt, settings);
       setGeneratedImage(resultBase64);
       setStep(AppStep.EDITING);
     } catch (err: any) {
       console.error(err);
-      setError(t.error);
+      setError(`${t.error} ${err.message || ''}`);
       setStep(AppStep.PROMPT);
     }
   };
@@ -188,13 +236,13 @@ const App: React.FC = () => {
         const suffix = language === 'zh' ? BANNER_PROMPT_SUFFIX_ZH : BANNER_PROMPT_SUFFIX_EN;
         const bannerPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
-        const rawBanner = await generateBanner(uploadedFile, bannerPrompt);
+        const rawBanner = await generateBanner(uploadedFile, bannerPrompt, settings);
         const croppedBanner = await cropBannerToSize(rawBanner);
         
         setBannerImage(croppedBanner);
     } catch (err: any) {
         console.error("Banner generation failed", err);
-        setBannerError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+        setBannerError(`${language === 'zh' ? '生成失败' : 'Generation failed'}: ${err.message || ''}`);
     } finally {
         setIsGeneratingBanner(false);
     }
@@ -211,13 +259,13 @@ const App: React.FC = () => {
         const suffix = language === 'zh' ? GUIDE_PROMPT_SUFFIX_ZH : GUIDE_PROMPT_SUFFIX_EN;
         const guidePrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
-        const rawGuide = await generateDonationGuide(uploadedFile, guidePrompt);
+        const rawGuide = await generateDonationGuide(uploadedFile, guidePrompt, settings);
         const croppedGuide = await cropGuideToSize(rawGuide);
         
         setGuideImage(croppedGuide);
     } catch (err: any) {
         console.error("Guide generation failed", err);
-        setGuideError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+        setGuideError(`${language === 'zh' ? '生成失败' : 'Generation failed'}: ${err.message || ''}`);
     } finally {
         setIsGeneratingGuide(false);
     }
@@ -234,13 +282,13 @@ const App: React.FC = () => {
         const suffix = language === 'zh' ? THANKYOU_PROMPT_SUFFIX_ZH : THANKYOU_PROMPT_SUFFIX_EN;
         const thankYouPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
-        const rawThankYou = await generateDonationThankYou(uploadedFile, thankYouPrompt);
+        const rawThankYou = await generateDonationThankYou(uploadedFile, thankYouPrompt, settings);
         const croppedThankYou = await cropThankYouToSize(rawThankYou);
         
         setThankYouImage(croppedThankYou);
     } catch (err: any) {
         console.error("Thank You generation failed", err);
-        setThankYouError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+        setThankYouError(`${language === 'zh' ? '生成失败' : 'Generation failed'}: ${err.message || ''}`);
     } finally {
         setIsGeneratingThankYou(false);
     }
@@ -257,12 +305,12 @@ const App: React.FC = () => {
         const suffix = language === 'zh' ? COVER_PROMPT_SUFFIX_ZH : COVER_PROMPT_SUFFIX_EN;
         const coverPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
-        const rawCover = await generateStickerCover(uploadedFile, coverPrompt);
+        const rawCover = await generateStickerCover(uploadedFile, coverPrompt, settings);
         // Do NOT crop yet. We keep it high res for better bg removal in EditorSection.
         setCoverImage(rawCover);
     } catch (err: any) {
         console.error("Cover generation failed", err);
-        setCoverError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+        setCoverError(`${language === 'zh' ? '生成失败' : 'Generation failed'}: ${err.message || ''}`);
     } finally {
         setIsGeneratingCover(false);
     }
@@ -279,12 +327,12 @@ const App: React.FC = () => {
         const suffix = language === 'zh' ? ICON_PROMPT_SUFFIX_ZH : ICON_PROMPT_SUFFIX_EN;
         const iconPrompt = `${prefix}\n\nOriginal Request: ${prompt}\n\n${suffix}`;
         
-        const rawIcon = await generateStickerIcon(uploadedFile, iconPrompt);
+        const rawIcon = await generateStickerIcon(uploadedFile, iconPrompt, settings);
         // Do NOT crop yet. We keep it high res for better bg removal in EditorSection.
         setIconImage(rawIcon);
     } catch (err: any) {
         console.error("Icon generation failed", err);
-        setIconError(language === 'zh' ? '生成失败，请重试' : 'Generation failed. Please try again.');
+        setIconError(`${language === 'zh' ? '生成失败' : 'Generation failed'}: ${err.message || ''}`);
     } finally {
         setIsGeneratingIcon(false);
     }
@@ -308,6 +356,16 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/50 flex flex-col">
       
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        settings={settings}
+        onSave={handleSaveSettings}
+        hasEnvKey={hasEnvKey}
+        lang={language}
+      />
+
       {/* Header */}
       <header className="w-full bg-white/80 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-50 flex-none">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -320,6 +378,13 @@ const App: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+             <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-all"
+                title="Settings"
+             >
+                <SettingsIcon size={20} />
+             </button>
              <a 
                 href="https://github.com/irol765/MemeGen" 
                 target="_blank" 
@@ -410,7 +475,7 @@ const App: React.FC = () => {
         
                 {/* Error Message */}
                 {error && (
-                  <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
+                  <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center break-words">
                     {error}
                   </div>
                 )}

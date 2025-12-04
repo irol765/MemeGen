@@ -233,7 +233,21 @@ export const TRANSLATIONS = {
     authButton: "Unlock App",
     authError: "Incorrect access code. Please try again.",
     bgRemovalActive: "Background Removal Active",
-    bgRemovalActiveDesc: "The green background will be automatically removed when you click download. Adjust the **Color Tolerance** slider below if needed."
+    bgRemovalActiveDesc: "The green background will be automatically removed when you click download. Adjust the **Color Tolerance** slider below if needed.",
+    
+    // Settings Translations
+    settingsTitle: "API Settings",
+    apiKeyRequired: "API Key Required",
+    apiKeyRequiredDesc: "No default API key was found. Please enter your Google Gemini API key or a custom proxy key to continue.",
+    apiKeyLabel: "API Key",
+    apiKeyNote: "Your key is stored locally in your browser.",
+    baseUrlLabel: "API Base URL (Proxy)",
+    baseUrlPlaceholder: "https://your-proxy.com",
+    baseUrlNote: "Optional. Enter the full base URL (e.g., https://api.openai.com).",
+    proxyLabel: "OpenAI Compatible Interface",
+    proxyNote: "Enable this if using a 3rd party proxy (NewAPI/OneAPI) that expects OpenAI chat format.",
+    saveSettings: "Save Settings",
+    cancel: "Cancel"
   },
   zh: {
     title: "MemeGen Pro",
@@ -327,6 +341,20 @@ export const TRANSLATIONS = {
     authButton: "解锁应用",
     authError: "安全码错误，请重试。",
     bgRemovalActive: "自动抠图已启用",
-    bgRemovalActiveDesc: "绿色背景将在下载时自动移除。如下载后背景未去除干净，请调整下方的“颜色容差”滑块。"
+    bgRemovalActiveDesc: "绿色背景将在下载时自动移除。如下载后背景未去除干净，请调整下方的“颜色容差”滑块。",
+
+    // Settings Translations
+    settingsTitle: "API 设置",
+    apiKeyRequired: "需要 API 密钥",
+    apiKeyRequiredDesc: "未检测到默认 API 密钥。请输入您的 Google Gemini API 密钥或自定义代理密钥以继续。",
+    apiKeyLabel: "API 密钥",
+    apiKeyNote: "您的密钥仅保存在本地浏览器中。",
+    baseUrlLabel: "API 代理地址 (Base URL)",
+    baseUrlPlaceholder: "https://api.openai.com",
+    baseUrlNote: "可选。输入完整的 Base URL (例如 https://api.openai.com)。",
+    proxyLabel: "OpenAI 兼容模式",
+    proxyNote: "如果您使用第三方代理（如 NewAPI/OneAPI）并需要 OpenAI 格式，请开启此项。",
+    saveSettings: "保存设置",
+    cancel: "取消"
   }
 };

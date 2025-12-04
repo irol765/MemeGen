@@ -34,3 +34,9 @@ export interface StickerSlice {
   blob: Blob;
   previewUrl: string;
 }
+
+export interface AppSettings {
+  apiKey: string;
+  baseUrl: string;
+  useOpenAIFormat: boolean;
+}
