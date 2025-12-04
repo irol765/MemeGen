@@ -3,7 +3,7 @@
 export const MODEL_NAME = 'gemini-3-pro-image-preview';
 
 export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格表情包。
-1. **风格要求**：使用干净、清晰的**矢量平涂风格**或**赛璐璐风格**。**严禁**使用蜡笔、粉笔、彩铅或素描质感。色彩要明亮、饱满。
+1. **风格要求**：使用干净、清晰的**矢量平涂风格**或**赛璐璐风格**。**严禁**使用蜡笔、粉笔、彩铅或素描质感。色彩要明亮、饱满，注意头饰要正确，不得在任何地方显示品牌logo。
 2. **布局要求**：使用 4x6 布局，单个表情包含文字大小不得超过230*230像素。
 3. **内容要求**：
    - 涵盖各种常用的聊天语句（如：好的、谢谢、惊讶、生气、晚安等）。
@@ -16,7 +16,9 @@ export const DEFAULT_PROMPT_ZH = `为我生成图中角色的 Q 版 LINE 风格�
    - 单个表情内容需紧凑，避免过多留白。`;
 
 export const DEFAULT_PROMPT_EN = `Generate a Q-version, LINE-style sticker pack for the character.
-1. **Style**: Use clean, clear **vector/flat color style** or **Celluloid style**. **DO NOT** use crayon, chalk, colored pencil, or sketch textures. Colors should be bright and solid.
+1. **Style**: Use clean, clear **vector/flat color style** or **Celluloid style**. **DO NOT** use crayon, chalk, colored pencil, or sketch textures. Colors should be bright and solid, Ensure the headgear is properly worn and should not display any brand logos anywhere.
+
+.
 2. **Layout**: Use a 4x6 grid layout. Each sticker (including text) must not exceed 230x230 pixels within the grid.
 3. **Content**:
    - Cover various common chat phrases (e.g., OK, Thanks, Shocked, Angry, Goodnight).
@@ -46,7 +48,7 @@ export const GIF_PROMPT_TEMPLATE_EN = `Generate a Q-version Sprite Sheet for a G
 4. **Text**: **NO TEXT**. Show the action only.
 5. **Technical**: Background must be solid bright green (#00FF00). No grid lines. Image aspect ratio 16:9, 4K resolution.`;
 
-export const BANNER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的横幅插画。`;
+export const BANNER_PROMPT_PREFIX_ZH = `请忽略之前的网格布局要求。基于该角色风格，生成一张微信表情包商城的横幅插画，不能使用任何emoji元素。`;
 export const BANNER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
 1. 图片分辨率高，长宽比接近 2:1 (最终 750x400)。
 2. 【绝对不要包含任何文字】。
@@ -54,7 +56,7 @@ export const BANNER_PROMPT_SUFFIX_ZH = `\n\n详细要求：
 4. 画面要有故事性，展示角色的生动动态。
 5. 必须是一张完整的横幅插画，不要网格，不要切片。`;
 
-export const BANNER_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Based on this character style, generate a banner illustration for a sticker shop.`;
+export const BANNER_PROMPT_PREFIX_EN = `Ignore previous grid layout instructions. Based on this character style, generate a banner illustration for a sticker shop, Do not use any emoji elements.`;
 export const BANNER_PROMPT_SUFFIX_EN = `\n\nRequirements:
 1. High resolution, aspect ratio approx 2:1 (target 750x400).
 2. NO TEXT in the image.
