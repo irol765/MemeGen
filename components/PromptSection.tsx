@@ -1,7 +1,6 @@
 
-
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, Grid, Film, Image as ImageIcon, FileText, Eye } from 'lucide-react';
+import { Sparkles, ArrowRight, Grid, Film, Image as ImageIcon, FileText, Eye, Pencil } from 'lucide-react';
 import { TRANSLATIONS } from '../constants';
 import { Language, AppMode } from '../types';
 
@@ -22,7 +21,7 @@ interface PromptSectionProps {
 // Simple internal Markdown Renderer to avoid extra dependencies
 const SimpleMarkdownRenderer = ({ content }: { content: string }) => {
   return (
-    <div className="w-full h-full p-4 overflow-y-auto text-sm text-slate-700 space-y-2 font-normal">
+    <div className="w-full h-full p-4 overflow-y-auto text-sm text-slate-700 space-y-2 font-normal whitespace-pre-wrap">
       {content.split('\n').map((line, i) => {
         const trimmed = line.trim();
         // Handle bolding: **text**
@@ -136,17 +135,25 @@ const PromptSection: React.FC<PromptSectionProps> = ({
              <label className="text-sm font-semibold text-slate-700">
                 {mode === AppMode.GIF ? t.promptLabel + " (Auto-Generated)" : t.promptLabel}
              </label>
-             <div className="flex bg-slate-200 rounded-lg p-0.5">
+             <div className="flex bg-slate-200 rounded-lg p-1 gap-1">
                 <button 
                   onClick={() => setViewMode('edit')}
                   disabled={mode === AppMode.GIF}
-                  className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${viewMode === 'edit' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${mode === AppMode.GIF ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      viewMode === 'edit' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  } ${mode === AppMode.GIF ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <FileText size={12} /> {t.editPrompt}
+                  <Pencil size={12} /> {t.editPrompt}
                 </button>
                 <button 
                   onClick={() => setViewMode('preview')}
-                  className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${viewMode === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      viewMode === 'preview' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
                 >
                   <Eye size={12} /> {t.previewPrompt}
                 </button>
@@ -165,7 +172,6 @@ const PromptSection: React.FC<PromptSectionProps> = ({
               <SimpleMarkdownRenderer content={prompt} />
             )}
             
-            {/* Read-only overlay for GIF mode if needed, though viewMode switch handles most of it */}
             {mode === AppMode.GIF && viewMode === 'edit' && (
                 <div className="absolute inset-0 bg-slate-50/50 flex items-center justify-center text-slate-400 text-sm">
                    Preview Only
